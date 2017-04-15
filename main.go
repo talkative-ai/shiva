@@ -12,7 +12,7 @@ func init() {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/", home)
-	r.HandleFunc("/.well-known/acme-challenge/NX1lFw-WUrXPNfjUPvgEmzulsrpsobWGa3SW_GO5MPQ", ssl)
+	r.HandleFunc("/.well-known/acme-challenge/LGBFTrX9DCSCoxEax-Tw36bB0yhJRZoiG2BpbmcM0Ks", ssl)
 
 	http.Handle("/", r)
 }
@@ -21,15 +21,6 @@ func home(w http.ResponseWriter, rq *http.Request) {
 	io.WriteString(w, "Hello World!")
 }
 
-// [START func_root]
-func root(w http.ResponseWriter, rq *http.Request) {
-
-	io.WriteString(w, "NX1lFw-WUrXPNfjUPvgEmzulsrpsobWGa3SW_GO5MPQ.dHP9qyK89IfuTqoierLcfa3E_gZetc7DP7B5SuAznMk")
-}
-
-// [END func_root]
-
 func ssl(w http.ResponseWriter, rq *http.Request) {
-
-	io.WriteString(w, "NX1lFw-WUrXPNfjUPvgEmzulsrpsobWGa3SW_GO5MPQ.dHP9qyK89IfuTqoierLcfa3E_gZetc7DP7B5SuAznMk")
+	io.WriteString(w, "LGBFTrX9DCSCoxEax-Tw36bB0yhJRZoiG2BpbmcM0Ks.xhbKXPDCbpg4pglimVoCtbJVp5X-gqojRN90KtP2Ugc")
 }
