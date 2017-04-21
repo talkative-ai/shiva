@@ -5,3 +5,7 @@ handlers:
 - url: /.*
   script: _go_app
   secure: always
+
+env_variables:
+  REDIS_ADDR: 130.211.236.141:6379
+  REDIS_PASSWORD: yF14Kcdk
