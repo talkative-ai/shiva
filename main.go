@@ -1,57 +1,28 @@
-package prospectacle
+package main
 
 import (
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 
-	"os"
+	"github.com/warent/phrhero-backend/prehandle"
+	"github.com/warent/phrhero-backend/router"
+	"github.com/warent/phrhero-backend/routes"
 
-	"github.com/go-redis/redis"
 	"github.com/gorilla/mux"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
-	"google.golang.org/appengine/log"
-	"google.golang.org/appengine/socket"
 )
 
-func init() {
+func doRoute(r *mux.Router, route *router.Route) {
+	r.Handle(route.Path, prehandle.PreHandle(route.Handler.(http.HandlerFunc), route.Prehandler...)).Methods(route.Method)
+}
 
+func main() {
 	r := mux.NewRouter()
-
-	r.HandleFunc("/", home)
-	r.HandleFunc("/create/{value}", create)
-	r.HandleFunc("/.well-known/acme-challenge/LGBFTrX9DCSCoxEax-Tw36bB0yhJRZoiG2BpbmcM0Ks", ssl)
-	r.HandleFunc("/redis/{value}", writeToRedis)
+	doRoute(r, routes.PostUserRegister)
 
 	http.Handle("/", r)
-}
-
-func writeToRedis(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	ctx := appengine.NewContext(r)
-
-	client := redis.NewClient(&redis.Options{
-		Dialer: func() (net.Conn, error) {
-			return socket.Dial(ctx, "tcp", os.Getenv("REDIS_ADDR"))
-		},
-		Password: os.Getenv("REDIS_PASSWORD"),
-		DB:       0,
-	})
-
-	pong, err := client.Ping().Result()
-	if err != nil {
-		log.Criticalf(ctx, err.Error())
-		return
-	}
-
-	log.Debugf(ctx, pong)
-	client.Set("Saved", vars["value"], -1)
-}
-
-type Entity struct {
-	Value string
 }
 
 func create(w http.ResponseWriter, r *http.Request) {
