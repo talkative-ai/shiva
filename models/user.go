@@ -1,13 +1,22 @@
 package models
 
 import (
+	"crypto/md5"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
 	"strconv"
+
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/log"
+	"google.golang.org/appengine/urlfetch"
+	mailgun "gopkg.in/mailgun/mailgun-go.v1"
 
 	"time"
 
+	"github.com/go-redis/redis"
 	"github.com/warent/phrhero-calcifer/phrerrors"
-	"github.com/warent/phrhero-calcifer/utilities"
 )
 
 // User contains all the properties of the User model. The functions may mutate the model itself and internal storage representations
@@ -16,6 +25,13 @@ type User struct {
 	Password  string
 	FirstName string
 	LastName  string
+}
+
+// StdParams Standard parameters used within for storage mutations and logging
+type StdParams struct {
+	Cache *redis.Client
+	W     http.ResponseWriter
+	R     *http.Request
 }
 
 // UserAccountStatus is enforces type-safety for what it self-describes
@@ -35,7 +51,7 @@ const (
 	USER_ACCOUNT_OK UserAccountStatus = 1 << iota
 )
 
-func (user *User) GetAccountStatus(params *utilities.StdParams) (UserAccountStatus, error) {
+func (user *User) GetAccountStatus(params *StdParams) (UserAccountStatus, error) {
 
 	accountStatus, err := params.Cache.HGet(fmt.Sprintf("user:%s", user.Email), "account_status").Result()
 	if err != nil && err.Error() != "redis: nil" {
@@ -52,7 +68,7 @@ func (user *User) GetAccountStatus(params *utilities.StdParams) (UserAccountStat
 	return UserAccountStatus(accStatParse), err
 }
 
-func (user *User) SetAccountStatus(params *utilities.StdParams, status UserAccountStatus) (bool, error) {
+func (user *User) SetAccountStatus(params *StdParams, status UserAccountStatus) (bool, error) {
 
 	isNewValue, err := params.Cache.HSet(fmt.Sprintf("user:%s", user.Email), "account_status", uint32(status)).Result()
 	if err != nil {
@@ -63,7 +79,7 @@ func (user *User) SetAccountStatus(params *utilities.StdParams, status UserAccou
 	return isNewValue, err
 }
 
-func (user *User) Save(params *utilities.StdParams) (bool, error) {
+func (user *User) Save(params *StdParams) (bool, error) {
 	return false, nil
 }
 
@@ -75,7 +91,7 @@ const (
 	VERIFICATION_SENT SendVerificationEmailStatus = iota
 )
 
-func (user *User) SendVerificationEmail(params *utilities.StdParams) (SendVerificationEmailStatus, error) {
+func (user *User) SendVerificationEmail(params *StdParams) (SendVerificationEmailStatus, error) {
 
 	accStatus, err := user.GetAccountStatus(params)
 	if err != nil {
@@ -96,7 +112,30 @@ func (user *User) SendVerificationEmail(params *utilities.StdParams) (SendVerifi
 		return EMAIL_COOLDOWN, nil
 	}
 
-	go utilities.SendVerificationEmail(params, user.Email)
+	h := md5.New()
+	io.WriteString(h, fmt.Sprintf("%i", time.Now().UnixNano()))
+	io.WriteString(h, user.Email)
+	hash := fmt.Sprintf("%x", h.Sum(nil))
+
+	params.Cache.Set(fmt.Sprintf("user:%s:email_verify", user.Email), hash, 0).Result()
+
+	go func(params *StdParams, email string, hash string) {
+
+		mg := mailgun.NewMailgun(os.Getenv("MG_DOMAIN"), os.Getenv("MG_API_KEY"), os.Getenv("MG_PUBLIC_API_KEY"))
+		ctx := appengine.NewContext(params.R)
+		client := urlfetch.Client(ctx)
+		mg.SetClient(client)
+
+		message := mailgun.NewMessage(
+			"no-reply@phrhero.com",
+			"phrhero Email Verification!",
+			fmt.Sprintf("Verify your email: %s", hash),
+			email)
+		_, _, err := mg.Send(message)
+		if err != nil {
+			log.Errorf(ctx, err.Error())
+		}
+	}(params, user.Email, hash)
 
 	return VERIFICATION_SENT, nil
 }
