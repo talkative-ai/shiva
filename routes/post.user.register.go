@@ -6,10 +6,9 @@ import (
 	"github.com/warent/phrhero-calcifer/models"
 	"github.com/warent/phrhero-calcifer/phrerrors"
 	"github.com/warent/phrhero-calcifer/router"
+	"github.com/warent/phrhero-calcifer/utilities"
 
 	"encoding/json"
-
-	"fmt"
 
 	"github.com/warent/phrhero-calcifer/prehandle"
 	"github.com/warent/phrhero-calcifer/providers"
@@ -41,7 +40,7 @@ func postUserRegisterHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	userParams := &models.StdParams{Cache: cache, W: w, R: r}
+	userParams := &utilities.StdParams{Cache: cache, W: w, R: r}
 	var user models.User
 	err = json.Unmarshal([]byte(r.Header.Get("X-Body")), &user)
 	if err != nil {
@@ -72,11 +71,7 @@ func postUserRegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintln(w, "Made it this far")
-
 	user.Save(userParams)
-	saveStat, err := user.SendVerificationEmail(userParams)
-
-	fmt.Fprintln(w, saveStat, err)
+	user.SendVerificationEmail(userParams)
 
 }
