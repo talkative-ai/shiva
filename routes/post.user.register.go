@@ -3,16 +3,16 @@ package routes
 import (
 	"net/http"
 
-	"github.com/warent/phrhero-backend/models"
-	"github.com/warent/phrhero-backend/phrerrors"
-	"github.com/warent/phrhero-backend/router"
+	"github.com/warent/phrhero-calcifer/models"
+	"github.com/warent/phrhero-calcifer/phrerrors"
+	"github.com/warent/phrhero-calcifer/router"
 
 	"encoding/json"
 
 	"fmt"
 
-	"github.com/warent/phrhero-backend/prehandle"
-	"github.com/warent/phrhero-backend/providers"
+	"github.com/warent/phrhero-calcifer/prehandle"
+	"github.com/warent/phrhero-calcifer/providers"
 )
 
 // PostUserRegister router.Route

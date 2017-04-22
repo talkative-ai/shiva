@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/warent/phrhero-backend/router"
+	"github.com/warent/phrhero-calcifer/router"
 
-	"github.com/warent/phrhero-backend/prehandle"
+	"github.com/warent/phrhero-calcifer/prehandle"
 )
 
 // GetIndex router.Route

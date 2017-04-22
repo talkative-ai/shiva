@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
-	"github.com/warent/phrhero-backend/phrerrors"
+	"github.com/warent/phrhero-calcifer/phrerrors"
 )
 
 // User contains all the properties of the User model. The functions may mutate the model itself and internal storage representations

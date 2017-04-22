@@ -5,8 +5,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/warent/phrhero-backend/phrerrors"
-	"github.com/warent/phrhero-backend/utilities"
+	"github.com/warent/phrhero-calcifer/phrerrors"
+	"github.com/warent/phrhero-calcifer/utilities"
 )
 
 // Prehandler type is exactly the same as http.HandlerFunc except that a return bool is expected to indicate success/failure
