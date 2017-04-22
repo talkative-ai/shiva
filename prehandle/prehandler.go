@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/warent/phrhero-backend/errors"
 	"github.com/warent/phrhero-backend/utilities"
 )
 
@@ -37,8 +38,8 @@ func SetJSON(w http.ResponseWriter, r *http.Request) bool {
 func JWT(w http.ResponseWriter, r *http.Request) bool {
 	token := r.Header.Get("X-Token")
 
-	if !utilities.ValidateJWT(token) {
-		merror.Respond(w, &merror.MontageSimpleError{
+	if !utilities.ValidateJWT(r, token) {
+		errors.Respond(w, &errors.PHRSimpleError{
 			Code:    401,
 			Message: "JWT_ERROR",
 		})
@@ -55,7 +56,7 @@ func JWT(w http.ResponseWriter, r *http.Request) bool {
 func RequireBody(limit int64) Prehandler {
 	return func(w http.ResponseWriter, r *http.Request) bool {
 		if r.Body == nil {
-			merror.Respond(w, &merror.MontageSimpleError{
+			errors.Respond(w, &errors.PHRSimpleError{
 				Code:    http.StatusBadRequest,
 				Message: "EMPTY_BODY",
 			})
@@ -64,7 +65,7 @@ func RequireBody(limit int64) Prehandler {
 
 		body, err := ioutil.ReadAll(io.LimitReader(r.Body, limit))
 		if err != nil {
-			merror.Respond(w, &merror.MontageSimpleError{
+			errors.Respond(w, &errors.PHRSimpleError{
 				Code:    http.StatusBadRequest,
 				Message: err.Error(),
 			})
