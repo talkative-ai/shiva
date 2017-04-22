@@ -1,4 +1,4 @@
-package errors
+package phrerrors
 
 import (
 	"encoding/json"

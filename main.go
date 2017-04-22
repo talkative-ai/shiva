@@ -5,9 +5,9 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/warent/phrhero-backend/prehandle"
-	"github.com/warent/phrhero-backend/router"
-	"github.com/warent/phrhero-backend/routes"
+	"phrhero-backend/prehandle"
+	"phrhero-backend/router"
+	"phrhero-backend/routes"
 
 	"github.com/gorilla/mux"
 	"google.golang.org/appengine"
@@ -18,7 +18,7 @@ func doRoute(r *mux.Router, route *router.Route) {
 	r.Handle(route.Path, prehandle.PreHandle(route.Handler.(http.HandlerFunc), route.Prehandler...)).Methods(route.Method)
 }
 
-func main() {
+func init() {
 	r := mux.NewRouter()
 	doRoute(r, routes.PostUserRegister)
 

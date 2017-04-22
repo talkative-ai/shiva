@@ -5,8 +5,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/warent/phrhero-backend/errors"
-	"github.com/warent/phrhero-backend/utilities"
+	"phrhero-backend/phrerrors"
+	"phrhero-backend/utilities"
 )
 
 // Prehandler type is exactly the same as http.HandlerFunc except that a return bool is expected to indicate success/failure
@@ -39,7 +39,7 @@ func JWT(w http.ResponseWriter, r *http.Request) bool {
 	token := r.Header.Get("X-Token")
 
 	if !utilities.ValidateJWT(r, token) {
-		errors.Respond(w, &errors.PHRSimpleError{
+		phrerrors.Respond(w, &phrerrors.PHRSimpleError{
 			Code:    401,
 			Message: "JWT_ERROR",
 		})
@@ -56,7 +56,7 @@ func JWT(w http.ResponseWriter, r *http.Request) bool {
 func RequireBody(limit int64) Prehandler {
 	return func(w http.ResponseWriter, r *http.Request) bool {
 		if r.Body == nil {
-			errors.Respond(w, &errors.PHRSimpleError{
+			phrerrors.Respond(w, &phrerrors.PHRSimpleError{
 				Code:    http.StatusBadRequest,
 				Message: "EMPTY_BODY",
 			})
@@ -65,7 +65,7 @@ func RequireBody(limit int64) Prehandler {
 
 		body, err := ioutil.ReadAll(io.LimitReader(r.Body, limit))
 		if err != nil {
-			errors.Respond(w, &errors.PHRSimpleError{
+			phrerrors.Respond(w, &phrerrors.PHRSimpleError{
 				Code:    http.StatusBadRequest,
 				Message: err.Error(),
 			})

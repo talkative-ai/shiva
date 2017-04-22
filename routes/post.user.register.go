@@ -3,12 +3,14 @@ package routes
 import (
 	"net/http"
 
-	"github.com/warent/phrhero-backend/errors"
-	"github.com/warent/phrhero-backend/models"
-	"github.com/warent/phrhero-backend/router"
+	"phrhero-backend/phrerrors"
+	"phrhero-backend/models"
+	"phrhero-backend/router"
 
-	"github.com/warent/phrhero-backend/prehandle"
-	"github.com/warent/phrhero-backend/providers"
+	"encoding/json"
+
+	"phrhero-backend/prehandle"
+	"phrhero-backend/providers"
 )
 
 // PostUserRegister router.Route
@@ -27,7 +29,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	cache, err := providers.ConnectRedis(r)
 	if err != nil {
-		errors.ServerError(w, r, err)
+		phrerrors.ServerError(w, r, err)
 		return
 	}
 
@@ -38,31 +40,34 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	userParams := &models.StdParams{Cache: cache, W: w, R: r}
-
-	user := &models.User{
-		Email:     "",
-		FirstName: "",
-		LastName:  "",
-	}
+	var user models.User
+	json.NewDecoder(r.Body).Decode(&user)
 
 	accStatus, err := user.GetAccountStatus(userParams)
 	if err != nil {
 		return
 	}
 
-	if accStatus != models.USER_ACCOUNT_DNE {
+	if accStatus&models.USER_ACCOUNT_DNE == 0 {
 		// Account exists
 		return
 	}
 
-	isNewAccount, err := user.SetAccountStatus(userParams, models.USER_ACCOUNT_CREATING)
+	accStatus ^= models.USER_ACCOUNT_DNE
+	accStatus |= models.USER_ACCOUNT_CREATING
+
+	isNewAccount, err := user.SetAccountStatus(userParams, accStatus)
 	if err != nil {
 		return
 	}
 
 	if !isNewAccount {
 		// Duplicate accounts are being created simultaneously. Abort
+		// TODO Handle more elegantly
 		return
 	}
+
+	user.Save(userParams)
+	user.SendVerificationEmail(userParams)
 
 }

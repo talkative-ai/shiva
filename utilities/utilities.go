@@ -6,7 +6,7 @@ import (
 	"os"
 
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/warent/phrhero-backend/providers"
+	"phrhero-backend/providers"
 )
 
 // ParseJTWClaims parses a JWT token for value accessing
