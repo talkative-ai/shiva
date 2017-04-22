@@ -3,14 +3,16 @@ package routes
 import (
 	"net/http"
 
-	"phrhero-backend/phrerrors"
-	"phrhero-backend/models"
-	"phrhero-backend/router"
+	"github.com/warent/phrhero-backend/models"
+	"github.com/warent/phrhero-backend/phrerrors"
+	"github.com/warent/phrhero-backend/router"
 
 	"encoding/json"
 
-	"phrhero-backend/prehandle"
-	"phrhero-backend/providers"
+	"fmt"
+
+	"github.com/warent/phrhero-backend/prehandle"
+	"github.com/warent/phrhero-backend/providers"
 )
 
 // PostUserRegister router.Route
@@ -21,11 +23,11 @@ import (
 var PostUserRegister = &router.Route{
 	Path:       "/user/register",
 	Method:     "POST",
-	Handler:    http.HandlerFunc(handler),
-	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.RequireBody(1024)},
+	Handler:    http.HandlerFunc(postUserRegisterHandler),
+	Prehandler: []prehandle.Prehandler{prehandle.RequireBody(1024)},
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
+func postUserRegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	cache, err := providers.ConnectRedis(r)
 	if err != nil {
@@ -41,7 +43,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	userParams := &models.StdParams{Cache: cache, W: w, R: r}
 	var user models.User
-	json.NewDecoder(r.Body).Decode(&user)
+	err = json.Unmarshal([]byte(r.Header.Get("X-Body")), &user)
+	if err != nil {
+		return
+	}
 
 	accStatus, err := user.GetAccountStatus(userParams)
 	if err != nil {
@@ -67,7 +72,11 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Fprintln(w, "Made it this far")
+
 	user.Save(userParams)
-	user.SendVerificationEmail(userParams)
+	saveStat, err := user.SendVerificationEmail(userParams)
+
+	fmt.Fprintln(w, saveStat, err)
 
 }

@@ -3,7 +3,7 @@ package router
 import (
 	"net/http"
 
-	"phrhero-backend/prehandle"
+	"github.com/warent/phrhero-backend/prehandle"
 
 	"github.com/gorilla/mux"
 )
