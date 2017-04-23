@@ -3,9 +3,13 @@ package models
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
+
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/urlfetch"
 
 	"time"
 
@@ -109,16 +113,24 @@ func (user *User) SendVerificationEmail(params *StdParams) (SendVerificationEmai
 		return EMAIL_COOLDOWN, nil
 	}
 
-	go func(email string) {
-		buf, err := json.Marshal(&kikirequests.PostEmailVerificationRequest{
-			Email: email,
-		})
-		if err != nil {
-			return
-		}
+	buf, err := json.Marshal(&kikirequests.PostEmailVerificationRequest{
+		Email: user.Email,
+	})
+	if err != nil {
+		return -1, err
+	}
 
-		http.Post(os.Getenv("KIKI_URL")+"email/verification", "application/json", bytes.NewReader(buf))
-	}(user.Email)
+	ctx := appengine.NewContext(params.R)
+	client := urlfetch.Client(ctx)
+
+	res, err := client.Post(os.Getenv("KIKI_URL")+"email/verification", "application/json", bytes.NewReader(buf))
+	if err != nil {
+		fmt.Println(err)
+		return -1, err
+	}
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+	fmt.Println(body)
 
 	return VERIFICATION_SENT, nil
 }

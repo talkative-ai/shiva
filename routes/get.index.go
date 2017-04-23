@@ -15,7 +15,7 @@ import (
 // Accepts models.UserRegister
 // Responds with status of success or failure
 var GetIndex = &router.Route{
-	Path:       "/",
+	Path:       "/v1/",
 	Method:     "GET",
 	Handler:    http.HandlerFunc(getIndexHandler),
 	Prehandler: []prehandle.Prehandler{},

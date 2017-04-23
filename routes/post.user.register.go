@@ -12,6 +12,7 @@ import (
 
 	"github.com/phrhero/stdapi/prehandle"
 	"google.golang.org/appengine"
+	"google.golang.org/appengine/log"
 )
 
 // PostUserRegister router.Route
@@ -20,7 +21,7 @@ import (
 // Accepts models.UserRegister
 // Responds with status of success or failure
 var PostUserRegister = &router.Route{
-	Path:       "/user/register",
+	Path:       "/v1/user/register",
 	Method:     "POST",
 	Handler:    http.HandlerFunc(postUserRegisterHandler),
 	Prehandler: []prehandle.Prehandler{prehandle.RequireBody(1024)},
@@ -62,6 +63,7 @@ func postUserRegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	isNewAccount, err := user.SetAccountStatus(userParams, accStatus)
 	if err != nil {
+		log.Errorf(appengine.NewContext(r), err.Error())
 		return
 	}
 
@@ -72,6 +74,8 @@ func postUserRegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user.Save(userParams)
-	user.SendVerificationEmail(userParams)
+	if _, err := user.SendVerificationEmail(userParams); err != nil {
+		log.Errorf(appengine.NewContext(r), err.Error())
+	}
 
 }
