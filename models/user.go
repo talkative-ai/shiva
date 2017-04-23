@@ -1,13 +1,18 @@
 package models
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 
 	"time"
 
+	"encoding/json"
+
 	"github.com/go-redis/redis"
+	"github.com/phrhero/kiki/kikirequests"
 	"github.com/phrhero/stdapi/phrerrors"
 )
 
@@ -103,6 +108,17 @@ func (user *User) SendVerificationEmail(params *StdParams) (SendVerificationEmai
 	if !cooldownRefreshed {
 		return EMAIL_COOLDOWN, nil
 	}
+
+	go func(email string) {
+		buf, err := json.Marshal(&kikirequests.PostEmailVerificationRequest{
+			Email: email,
+		})
+		if err != nil {
+			return
+		}
+
+		http.Post(os.Getenv("KIKI_URL")+"email/verification", "application/json", bytes.NewReader(buf))
+	}(user.Email)
 
 	return VERIFICATION_SENT, nil
 }
