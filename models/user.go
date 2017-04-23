@@ -1,22 +1,14 @@
 package models
 
 import (
-	"crypto/md5"
 	"fmt"
-	"io"
 	"net/http"
-	"os"
 	"strconv"
-
-	"google.golang.org/appengine"
-	"google.golang.org/appengine/log"
-	"google.golang.org/appengine/urlfetch"
-	mailgun "gopkg.in/mailgun/mailgun-go.v1"
 
 	"time"
 
 	"github.com/go-redis/redis"
-	"github.com/warent/phrhero-calcifer/phrerrors"
+	"github.com/phrhero/stdapi/phrerrors"
 )
 
 // User contains all the properties of the User model. The functions may mutate the model itself and internal storage representations
@@ -111,31 +103,6 @@ func (user *User) SendVerificationEmail(params *StdParams) (SendVerificationEmai
 	if !cooldownRefreshed {
 		return EMAIL_COOLDOWN, nil
 	}
-
-	h := md5.New()
-	io.WriteString(h, fmt.Sprintf("%i", time.Now().UnixNano()))
-	io.WriteString(h, user.Email)
-	hash := fmt.Sprintf("%x", h.Sum(nil))
-
-	params.Cache.Set(fmt.Sprintf("user:%s:email_verify", user.Email), hash, 0).Result()
-
-	go func(params *StdParams, email string, hash string) {
-
-		mg := mailgun.NewMailgun(os.Getenv("MG_DOMAIN"), os.Getenv("MG_API_KEY"), os.Getenv("MG_PUBLIC_API_KEY"))
-		ctx := appengine.NewContext(params.R)
-		client := urlfetch.Client(ctx)
-		mg.SetClient(client)
-
-		message := mailgun.NewMessage(
-			"no-reply@phrhero.com",
-			"phrhero Email Verification!",
-			fmt.Sprintf("Verify your email: %s", hash),
-			email)
-		_, _, err := mg.Send(message)
-		if err != nil {
-			log.Errorf(ctx, err.Error())
-		}
-	}(params, user.Email, hash)
 
 	return VERIFICATION_SENT, nil
 }

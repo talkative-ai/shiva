@@ -3,14 +3,15 @@ package routes
 import (
 	"net/http"
 
-	"github.com/warent/phrhero-calcifer/models"
-	"github.com/warent/phrhero-calcifer/phrerrors"
-	"github.com/warent/phrhero-calcifer/router"
+	"github.com/phrhero/calcifer/models"
+	"github.com/phrhero/stdapi/aeproviders"
+	"github.com/phrhero/stdapi/phrerrors"
+	"github.com/phrhero/stdapi/router"
 
 	"encoding/json"
 
-	"github.com/warent/phrhero-calcifer/prehandle"
-	"github.com/warent/phrhero-calcifer/providers"
+	"github.com/phrhero/stdapi/prehandle"
+	"google.golang.org/appengine"
 )
 
 // PostUserRegister router.Route
@@ -27,7 +28,7 @@ var PostUserRegister = &router.Route{
 
 func postUserRegisterHandler(w http.ResponseWriter, r *http.Request) {
 
-	cache, err := providers.ConnectRedis(r)
+	cache, err := aeproviders.AEConnectRedis(appengine.NewContext(r))
 	if err != nil {
 		phrerrors.ServerError(w, r, err)
 		return
