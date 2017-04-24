@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"google.golang.org/appengine"
+	"google.golang.org/appengine/log"
 	"google.golang.org/appengine/taskqueue"
 
 	"time"
@@ -111,11 +112,13 @@ func (user *User) SendVerificationEmail(params *StdParams) (SendVerificationEmai
 
 	ctx := appengine.NewContext(params.R)
 
-	t := taskqueue.NewPOSTTask("v1/email/verification", url.Values{
+	t := taskqueue.NewPOSTTask("/v1/email/verification", url.Values{
 		"Email": []string{user.Email},
 	})
 
-	_, err = taskqueue.Add(ctx, t, "kiki")
+	if _, err := taskqueue.Add(ctx, t, "kiki"); err != nil {
+		log.Errorf(ctx, err.Error())
+	}
 
 	return VERIFICATION_SENT, nil
 }
