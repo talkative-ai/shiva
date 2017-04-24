@@ -1,22 +1,18 @@
 package models
 
 import (
-	"bytes"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"os"
 	"strconv"
 
 	"google.golang.org/appengine"
-	"google.golang.org/appengine/urlfetch"
+	"google.golang.org/appengine/taskqueue"
 
 	"time"
 
-	"encoding/json"
+	"net/url"
 
 	"github.com/go-redis/redis"
-	"github.com/phrhero/kiki/kikirequests"
 	"github.com/phrhero/stdapi/phrerrors"
 )
 
@@ -113,24 +109,13 @@ func (user *User) SendVerificationEmail(params *StdParams) (SendVerificationEmai
 		return EMAIL_COOLDOWN, nil
 	}
 
-	buf, err := json.Marshal(&kikirequests.PostEmailVerificationRequest{
-		Email: user.Email,
-	})
-	if err != nil {
-		return -1, err
-	}
-
 	ctx := appengine.NewContext(params.R)
-	client := urlfetch.Client(ctx)
 
-	res, err := client.Post(os.Getenv("KIKI_URL")+"email/verification", "application/json", bytes.NewReader(buf))
-	if err != nil {
-		fmt.Println(err)
-		return -1, err
-	}
-	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
-	fmt.Println(body)
+	t := taskqueue.NewPOSTTask("v1/email/verification", url.Values{
+		"Email": []string{user.Email},
+	})
+
+	_, err = taskqueue.Add(ctx, t, "kiki")
 
 	return VERIFICATION_SENT, nil
 }
