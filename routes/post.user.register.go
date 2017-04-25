@@ -29,7 +29,9 @@ var PostUserRegister = &router.Route{
 
 func postUserRegisterHandler(w http.ResponseWriter, r *http.Request) {
 
-	cache, err := aeproviders.AEConnectRedis(appengine.NewContext(r))
+	ctx := appengine.NewContext(r)
+
+	cache, err := aeproviders.AEConnectRedis(ctx)
 	if err != nil {
 		phrerrors.ServerError(w, r, err)
 		return
@@ -48,34 +50,29 @@ func postUserRegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accStatus, err := user.GetAccountStatus(userParams)
+	created, err := user.SetAccountFlag(userParams, models.UserAccountExists)
 	if err != nil {
+		log.Errorf(ctx, err.Error())
 		return
 	}
 
-	if accStatus&models.USER_ACCOUNT_DNE == 0 {
-		// Account exists
+	if created < 1 {
+		log.Debugf(ctx, "%d", created)
 		return
 	}
 
-	accStatus ^= models.USER_ACCOUNT_DNE
-	accStatus |= models.USER_ACCOUNT_CREATING
+	log.Debugf(ctx, "Here")
 
-	isNewAccount, err := user.SetAccountStatus(userParams, accStatus)
-	if err != nil {
-		log.Errorf(appengine.NewContext(r), err.Error())
+	if err = user.EncryptPassword(); err != nil {
+		log.Errorf(ctx, "post.user.register.go handler: %s", err.Error())
 		return
 	}
 
-	if !isNewAccount {
-		// Duplicate accounts are being created simultaneously. Abort
-		// TODO Handle more elegantly
-		return
-	}
-
-	user.Save(userParams)
-	if _, err := user.SendVerificationEmail(userParams); err != nil {
-		log.Errorf(appengine.NewContext(r), err.Error())
+	user.RegisterAccount(userParams)
+	if stat, err := user.SendVerificationEmail(userParams); err != nil {
+		log.Errorf(ctx, err.Error())
+	} else {
+		log.Debugf(ctx, "%d", stat)
 	}
 
 }

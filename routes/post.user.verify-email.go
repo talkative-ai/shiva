@@ -33,7 +33,7 @@ package routes
 // 		return
 // 	}
 
-// 	accStatus, err := user.GetAccountStatus(userParams)
+// 	accStatus, err := user.HasAccountFlag(userParams)
 // 	if err != nil {
 // 		return
 // 	}
@@ -46,7 +46,7 @@ package routes
 // 	accStatus ^= models.USER_ACCOUNT_DNE
 // 	accStatus |= models.USER_ACCOUNT_CREATING
 
-// 	isNewAccount, err := user.SetAccountStatus(userParams, accStatus)
+// 	isNewAccount, err := user.SetAccountFlag(userParams, accStatus)
 // 	if err != nil {
 // 		return
 // 	}

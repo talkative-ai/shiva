@@ -3,9 +3,11 @@ package models
 import (
 	"fmt"
 	"net/http"
-	"strconv"
+
+	"golang.org/x/crypto/bcrypt"
 
 	"google.golang.org/appengine"
+	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/log"
 	"google.golang.org/appengine/taskqueue"
 
@@ -15,6 +17,7 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/phrhero/stdapi/phrerrors"
+	"github.com/phrhero/stdapi/utilities"
 )
 
 // User contains all the properties of the User model. The functions may mutate the model itself and internal storage representations
@@ -23,6 +26,7 @@ type User struct {
 	Password  string
 	FirstName string
 	LastName  string
+	Salt      string
 }
 
 // StdParams Standard parameters used within for storage mutations and logging
@@ -32,53 +36,50 @@ type StdParams struct {
 	R     *http.Request
 }
 
-// UserAccountStatus is enforces type-safety for what it self-describes
-type UserAccountStatus uint32
+// UserAccountFlag is enforces type-safety for what it self-describes
+type UserAccountFlag uint32
 
 const (
-	// USER_ACCOUNT_DNE User account does not exist
-	USER_ACCOUNT_DNE UserAccountStatus = 1 << iota
+	// UserAccountExists User account does not exist
+	UserAccountExists UserAccountFlag = iota
 
-	// USER_ACCOUNT_CREATING User account is in the process of being created
-	USER_ACCOUNT_CREATING UserAccountStatus = 1 << iota
-
-	// USER_ACCOUNT Has been verified
-	USER_ACCOUNT_EMAIL_VERIFIED UserAccountStatus = 1 << iota
-
-	// USER_ACCOUNT_OK User account is all set up with no action items
-	USER_ACCOUNT_OK UserAccountStatus = 1 << iota
+	// UserAccountFlagEmailVerified Has been verified
+	UserAccountEmailVerified UserAccountFlag = iota
 )
 
-func (user *User) GetAccountStatus(params *StdParams) (UserAccountStatus, error) {
+func (user *User) HasAccountFlag(params *StdParams, flag UserAccountFlag) (bool, error) {
 
-	accountStatus, err := params.Cache.HGet(fmt.Sprintf("user:%s", user.Email), "account_status").Result()
+	isMember, err := params.Cache.SIsMember(fmt.Sprintf("user:%s:flags", user.Email), uint32(flag)).Result()
 	if err != nil && err.Error() != "redis: nil" {
-		phrerrors.ServerError(params.W, params.R, err)
-		return USER_ACCOUNT_DNE, err
-	}
-
-	if accountStatus == "" {
-		return USER_ACCOUNT_DNE, nil
-	}
-
-	accStatParse, _ := strconv.ParseUint(accountStatus, 10, 8)
-
-	return UserAccountStatus(accStatParse), err
-}
-
-func (user *User) SetAccountStatus(params *StdParams, status UserAccountStatus) (bool, error) {
-
-	isNewValue, err := params.Cache.HSet(fmt.Sprintf("user:%s", user.Email), "account_status", uint32(status)).Result()
-	if err != nil {
 		phrerrors.ServerError(params.W, params.R, err)
 		return false, err
 	}
 
-	return isNewValue, err
+	return isMember, nil
+
 }
 
-func (user *User) Save(params *StdParams) (bool, error) {
-	return false, nil
+func (user *User) SetAccountFlag(params *StdParams, flag UserAccountFlag) (int64, error) {
+
+	newValueCount, err := params.Cache.SAdd(fmt.Sprintf("user:%s:flags", user.Email), uint32(flag)).Result()
+	if err != nil {
+		phrerrors.ServerError(params.W, params.R, err)
+		return 0, err
+	}
+
+	return newValueCount, err
+}
+
+func (user *User) RegisterAccount(params *StdParams) error {
+	ctx := appengine.NewContext(params.R)
+
+	k := datastore.NewKey(ctx, "User", "0", 0, nil)
+
+	if _, err := datastore.Put(ctx, k, user); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type SendVerificationEmailStatus int8
@@ -91,13 +92,13 @@ const (
 
 func (user *User) SendVerificationEmail(params *StdParams) (SendVerificationEmailStatus, error) {
 
-	accStatus, err := user.GetAccountStatus(params)
+	isVerified, err := user.HasAccountFlag(params, UserAccountEmailVerified)
 	if err != nil {
 		return -1, err
 	}
 
 	// User account has already been verified
-	if accStatus&USER_ACCOUNT_EMAIL_VERIFIED != 0 {
+	if isVerified {
 		return ALREADY_VERIFIED, nil
 	}
 
@@ -121,4 +122,24 @@ func (user *User) SendVerificationEmail(params *StdParams) (SendVerificationEmai
 	}
 
 	return VERIFICATION_SENT, nil
+}
+
+func (user *User) EncryptPassword() error {
+
+	salt, err := utilities.GenerateRandomString(32)
+	if err != nil {
+		return err
+	}
+
+	password := fmt.Sprintf("%s%s%s", salt, user.Password, salt)
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	user.Password = string(hash)
+	user.Salt = salt
+
+	return nil
 }
