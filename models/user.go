@@ -82,19 +82,19 @@ func (user *User) RegisterAccount(params *StdParams) error {
 	return nil
 }
 
-type SendVerificationEmailStatus int8
+type SendVerificationEmailStatus string
 
 const (
-	EMAIL_COOLDOWN    SendVerificationEmailStatus = iota
-	ALREADY_VERIFIED  SendVerificationEmailStatus = iota
-	VERIFICATION_SENT SendVerificationEmailStatus = iota
+	EMAIL_COOLDOWN    SendVerificationEmailStatus = "EMAIL_COOLDOWN"
+	ALREADY_VERIFIED  SendVerificationEmailStatus = "ALREADY_VERIFIED"
+	VERIFICATION_SENT SendVerificationEmailStatus = "VERIFICATION_SENT"
 )
 
 func (user *User) SendVerificationEmail(params *StdParams) (SendVerificationEmailStatus, error) {
 
 	isVerified, err := user.HasAccountFlag(params, UserAccountEmailVerified)
 	if err != nil {
-		return -1, err
+		return "", err
 	}
 
 	// User account has already been verified
@@ -104,7 +104,7 @@ func (user *User) SendVerificationEmail(params *StdParams) (SendVerificationEmai
 
 	cooldownRefreshed, err := params.Cache.SetNX(fmt.Sprintf("user:%s:cooldown:email_sent", user.Email), 1, time.Second*30).Result()
 	if err != nil {
-		return -1, err
+		return "", err
 	}
 
 	if !cooldownRefreshed {

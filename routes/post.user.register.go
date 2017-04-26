@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/phrhero/calcifer/models"
@@ -47,17 +48,35 @@ func postUserRegisterHandler(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	err = json.Unmarshal([]byte(r.Header.Get("X-Body")), &user)
 	if err != nil {
+		phrerrors.ServerError(w, r, err)
 		return
 	}
 
 	created, err := user.SetAccountFlag(userParams, models.UserAccountExists)
 	if err != nil {
-		log.Errorf(ctx, err.Error())
+		phrerrors.ServerError(w, r, err)
 		return
 	}
 
 	if created < 1 {
-		log.Debugf(ctx, "%d", created)
+		isVerified, err := user.HasAccountFlag(userParams, models.UserAccountEmailVerified)
+		if err != nil {
+			phrerrors.ServerError(w, r, err)
+			return
+		}
+
+		var encoded []byte
+		if isVerified {
+			encoded, _ = json.Marshal(map[string]string{
+				"status": "E_EXISTS",
+			})
+		} else {
+			encoded, _ = json.Marshal(map[string]string{
+				"status": "VERIFICATION_SENT",
+			})
+		}
+
+		fmt.Fprintln(w, string(encoded))
 		return
 	}
 
@@ -68,11 +87,17 @@ func postUserRegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user.RegisterAccount(userParams)
-	if stat, err := user.SendVerificationEmail(userParams); err != nil {
-		log.Errorf(ctx, err.Error())
-	} else {
-		log.Debugf(ctx, "%d", stat)
+	stat, err := user.SendVerificationEmail(userParams)
+	if err != nil {
+		phrerrors.ServerError(w, r, err)
+		return
 	}
+
+	user.RegisterAccount(userParams)
+
+	encoded, _ := json.Marshal(map[string]string{
+		"status": string(stat),
+	})
+	fmt.Fprintln(w, string(encoded))
 
 }
