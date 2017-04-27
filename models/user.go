@@ -5,11 +5,14 @@ import (
 	"net/http"
 
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/net/context"
 
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 	"google.golang.org/appengine/log"
 	"google.golang.org/appengine/taskqueue"
+
+	cloud "cloud.google.com/go/datastore"
 
 	"time"
 
@@ -73,7 +76,7 @@ func (user *User) SetAccountFlag(params *StdParams, flag UserAccountFlag) (int64
 func (user *User) RegisterAccount(params *StdParams) error {
 	ctx := appengine.NewContext(params.R)
 
-	k := datastore.NewKey(ctx, "User", "0", 0, nil)
+	k := datastore.NewIncompleteKey(ctx, "User", nil)
 
 	if _, err := datastore.Put(ctx, k, user); err != nil {
 		return err
@@ -114,7 +117,8 @@ func (user *User) SendVerificationEmail(params *StdParams) (SendVerificationEmai
 	ctx := appengine.NewContext(params.R)
 
 	t := taskqueue.NewPOSTTask("/v1/email/verification", url.Values{
-		"Email": []string{user.Email},
+		"Email":    []string{user.Email},
+		"Password": []string{user.Password},
 	})
 
 	if _, err := taskqueue.Add(ctx, t, "kiki"); err != nil {
@@ -142,4 +146,23 @@ func (user *User) EncryptPassword() error {
 	user.Salt = salt
 
 	return nil
+}
+
+func (user *User) GetByEmail(ctx context.Context) error {
+
+	q := cloud.NewQuery("User").
+		Filter("Email =", user.Email).
+		Limit(1)
+
+	client, err := cloud.NewClient(ctx, "phrhero")
+	if err != nil {
+		return err
+	}
+
+	it := client.Run(ctx, q)
+
+	it.Next(user)
+
+	return nil
+
 }
