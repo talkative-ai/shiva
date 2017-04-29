@@ -170,6 +170,14 @@ func (user *User) GetByEmail(ctx context.Context) error {
 func (user *User) Validate(params *StdParams) (bool, error) {
 	ctx := appengine.NewContext(params.R)
 
+	// Check the cache if the user exits.
+	// This function is cheap
+	exists, err := params.Cache.Exists(fmt.Sprintf("user:%s:flags", user.Email)).Result()
+	if exists == 0 {
+		return false, nil
+	}
+
+	// Validate the password to the email address
 	clearPass := user.Password
 
 	user.GetByEmail(ctx)

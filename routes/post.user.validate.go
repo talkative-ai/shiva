@@ -59,16 +59,31 @@ func postUserValidateHandler(w http.ResponseWriter, r *http.Request) {
 
 	var encoded []byte
 
-	if isValid {
-		encoded, _ = json.Marshal(map[string]string{
-			"status": "VALID",
-		})
-	} else {
+	if !isValid {
 		encoded, _ = json.Marshal(map[string]string{
 			"status": "E_NOT_VALID",
 		})
+		fmt.Fprintln(w, string(encoded))
+		return
 	}
 
+	isVerified, err := user.HasAccountFlag(userParams, models.UserAccountEmailVerified)
+	if err != nil {
+		phrerrors.ServerError(w, r, err)
+		return
+	}
+	if !isVerified {
+		encoded, _ = json.Marshal(map[string]string{
+			"status": "VERIFICATION_SENT",
+		})
+		fmt.Fprintln(w, string(encoded))
+		return
+	}
+
+	encoded, _ = json.Marshal(map[string]string{
+		"status": "VALID",
+	})
 	fmt.Fprintln(w, string(encoded))
+	return
 
 }
