@@ -51,7 +51,7 @@ func postUserValidateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	isValid, err := user.Validate(userParams)
+	validateStatus, err := user.Validate(userParams)
 	if err != nil {
 		phrerrors.ServerError(w, r, err)
 		return
@@ -59,7 +59,15 @@ func postUserValidateHandler(w http.ResponseWriter, r *http.Request) {
 
 	var encoded []byte
 
-	if !isValid {
+	if validateStatus == models.NOT_EXIST {
+		encoded, _ = json.Marshal(map[string]string{
+			"status": "E_NOT_EXIST",
+		})
+		fmt.Fprintln(w, string(encoded))
+		return
+	}
+
+	if validateStatus == models.NOT_VALID {
 		encoded, _ = json.Marshal(map[string]string{
 			"status": "E_NOT_VALID",
 		})

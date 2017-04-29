@@ -167,14 +167,25 @@ func (user *User) GetByEmail(ctx context.Context) error {
 
 }
 
-func (user *User) Validate(params *StdParams) (bool, error) {
+type UserValidateStatus int8
+
+const (
+	NOT_EXIST UserValidateStatus = iota
+	NOT_VALID UserValidateStatus = iota
+	VALID     UserValidateStatus = iota
+)
+
+func (user *User) Validate(params *StdParams) (UserValidateStatus, error) {
 	ctx := appengine.NewContext(params.R)
 
 	// Check the cache if the user exits.
 	// This function is cheap
 	exists, err := params.Cache.Exists(fmt.Sprintf("user:%s:flags", user.Email)).Result()
+	if err != nil {
+		return -1, err
+	}
 	if exists == 0 {
-		return false, nil
+		return NOT_EXIST, nil
 	}
 
 	// Validate the password to the email address
@@ -186,9 +197,9 @@ func (user *User) Validate(params *StdParams) (bool, error) {
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		return false, nil
+		return NOT_VALID, nil
 	}
 
-	return true, nil
+	return VALID, nil
 
 }
