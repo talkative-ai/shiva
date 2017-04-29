@@ -166,3 +166,25 @@ func (user *User) GetByEmail(ctx context.Context) error {
 	return nil
 
 }
+
+func (user *User) Validate(params *StdParams) (bool, error) {
+	ctx := appengine.NewContext(params.R)
+
+	clearPass := user.Password
+
+	user.GetByEmail(ctx)
+
+	password := fmt.Sprintf("%s%s%s", user.Salt, clearPass, user.Salt)
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return false, err
+	}
+
+	if string(hash) == user.Password {
+		return true, nil
+	}
+
+	return false, nil
+
+}
