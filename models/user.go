@@ -184,15 +184,11 @@ func (user *User) Validate(params *StdParams) (bool, error) {
 
 	password := fmt.Sprintf("%s%s%s", user.Salt, clearPass, user.Salt)
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		return false, err
+		return false, nil
 	}
 
-	if string(hash) == user.Password {
-		return true, nil
-	}
-
-	return false, nil
+	return true, nil
 
 }
