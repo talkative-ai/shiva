@@ -19,8 +19,8 @@ import (
 	"net/url"
 
 	"github.com/go-redis/redis"
-	"github.com/phrhero/stdapi/phrerrors"
-	"github.com/phrhero/stdapi/utilities"
+	"github.com/warent/stdapi/phrerrors"
+	"github.com/warent/stdapi/utilities"
 )
 
 // User contains all the properties of the User model. The functions may mutate the model itself and internal storage representations
@@ -154,7 +154,7 @@ func (user *User) GetByEmail(ctx context.Context) error {
 		Filter("Email =", user.Email).
 		Limit(1)
 
-	client, err := cloud.NewClient(ctx, "phrhero")
+	client, err := cloud.NewClient(ctx, "warent")
 	if err != nil {
 		return err
 	}

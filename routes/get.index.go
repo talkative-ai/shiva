@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/phrhero/stdapi/router"
+	"github.com/warent/stdapi/router"
 
-	"github.com/phrhero/stdapi/prehandle"
+	"github.com/warent/stdapi/prehandle"
 )
 
 // GetIndex router.Route
@@ -23,6 +23,6 @@ var GetIndex = &router.Route{
 
 func getIndexHandler(w http.ResponseWriter, r *http.Request) {
 
-	fmt.Fprintf(w, "Want to help us build this api and more? Email us: dev-jobs@phrhero.com")
+	fmt.Fprintf(w, "Want to help us build this api and more? Email us: dev-jobs@aum.ai")
 
 }

@@ -4,9 +4,9 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/phrhero/stdapi/router"
+	"github.com/warent/stdapi/router"
 
-	"github.com/phrhero/stdapi/prehandle"
+	"github.com/warent/stdapi/prehandle"
 )
 
 // GetWellknownAcmeChallenge router.Route
