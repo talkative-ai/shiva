@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/warent/brahma/models"
+	"github.com/warent/shiva/models"
 	"github.com/warent/stdapi/aeproviders"
-	"github.com/warent/stdapi/phrerrors"
+	"github.com/warent/stdapi/myerrors"
 	"github.com/warent/stdapi/router"
 
 	"encoding/json"
@@ -38,7 +38,7 @@ func postUserVerifyHandler(w http.ResponseWriter, r *http.Request) {
 
 	cache, err := aeproviders.AEConnectRedis(ctx)
 	if err != nil {
-		phrerrors.ServerError(w, r, err)
+		myerrors.ServerError(w, r, err)
 		return
 	}
 
@@ -51,13 +51,13 @@ func postUserVerifyHandler(w http.ResponseWriter, r *http.Request) {
 	var params PostUserVerifyRequest
 	err = json.Unmarshal([]byte(r.Header.Get("X-Body")), &params)
 	if err != nil {
-		phrerrors.ServerError(w, r, err)
+		myerrors.ServerError(w, r, err)
 		return
 	}
 
 	email, err := cache.Get(fmt.Sprintf("email_verify:%s", params.Hash)).Result()
 	if err != nil && err != redis.Nil {
-		phrerrors.ServerError(w, r, err)
+		myerrors.ServerError(w, r, err)
 		return
 	}
 
@@ -69,7 +69,7 @@ func postUserVerifyHandler(w http.ResponseWriter, r *http.Request) {
 
 	deletedCount, err := cache.Del(fmt.Sprintf("email_verify:%s", params.Hash)).Result()
 	if err != nil {
-		phrerrors.ServerError(w, r, err)
+		myerrors.ServerError(w, r, err)
 		return
 	}
 
@@ -86,13 +86,13 @@ func postUserVerifyHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = user.GetByEmail(appengine.NewContext(r))
 	if err != nil {
-		phrerrors.ServerError(w, r, err)
+		myerrors.ServerError(w, r, err)
 		return
 	}
 
 	_, err = user.SetAccountFlag(userParams, models.UserAccountEmailVerified)
 	if err != nil {
-		phrerrors.ServerError(w, r, err)
+		myerrors.ServerError(w, r, err)
 		return
 	}
 

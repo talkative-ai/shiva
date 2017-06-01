@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/warent/brahma/models"
+	"github.com/warent/shiva/models"
 	"github.com/warent/stdapi/aeproviders"
-	"github.com/warent/stdapi/phrerrors"
+	"github.com/warent/stdapi/myerrors"
 	"github.com/warent/stdapi/router"
 
 	"encoding/json"
@@ -34,7 +34,7 @@ func postUserRegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	cache, err := aeproviders.AEConnectRedis(ctx)
 	if err != nil {
-		phrerrors.ServerError(w, r, err)
+		myerrors.ServerError(w, r, err)
 		return
 	}
 
@@ -48,20 +48,20 @@ func postUserRegisterHandler(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	err = json.Unmarshal([]byte(r.Header.Get("X-Body")), &user)
 	if err != nil {
-		phrerrors.ServerError(w, r, err)
+		myerrors.ServerError(w, r, err)
 		return
 	}
 
 	created, err := user.SetAccountFlag(userParams, models.UserAccountExists)
 	if err != nil {
-		phrerrors.ServerError(w, r, err)
+		myerrors.ServerError(w, r, err)
 		return
 	}
 
 	if created < 1 {
 		isVerified, err := user.HasAccountFlag(userParams, models.UserAccountEmailVerified)
 		if err != nil {
-			phrerrors.ServerError(w, r, err)
+			myerrors.ServerError(w, r, err)
 			return
 		}
 
@@ -89,7 +89,7 @@ func postUserRegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	stat, err := user.SendVerificationEmail(userParams)
 	if err != nil {
-		phrerrors.ServerError(w, r, err)
+		myerrors.ServerError(w, r, err)
 		return
 	}
 

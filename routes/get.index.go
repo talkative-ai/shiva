@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/warent/stdapi/router"
-
 	"github.com/warent/stdapi/prehandle"
+	"github.com/warent/stdapi/router"
 )
 
 // GetIndex router.Route

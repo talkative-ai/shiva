@@ -19,7 +19,7 @@ import (
 	"net/url"
 
 	"github.com/go-redis/redis"
-	"github.com/warent/stdapi/phrerrors"
+	"github.com/warent/stdapi/myerrors"
 	"github.com/warent/stdapi/utilities"
 )
 
@@ -54,7 +54,7 @@ func (user *User) HasAccountFlag(params *StdParams, flag UserAccountFlag) (bool,
 
 	isMember, err := params.Cache.SIsMember(fmt.Sprintf("user:%s:flags", user.Email), uint32(flag)).Result()
 	if err != nil && err.Error() != "redis: nil" {
-		phrerrors.ServerError(params.W, params.R, err)
+		myerrors.ServerError(params.W, params.R, err)
 		return false, err
 	}
 
@@ -66,7 +66,7 @@ func (user *User) SetAccountFlag(params *StdParams, flag UserAccountFlag) (int64
 
 	newValueCount, err := params.Cache.SAdd(fmt.Sprintf("user:%s:flags", user.Email), uint32(flag)).Result()
 	if err != nil {
-		phrerrors.ServerError(params.W, params.R, err)
+		myerrors.ServerError(params.W, params.R, err)
 		return 0, err
 	}
 

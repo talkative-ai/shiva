@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/warent/brahma/models"
+	"github.com/warent/shiva/models"
 	"github.com/warent/stdapi/aeproviders"
-	"github.com/warent/stdapi/phrerrors"
+	"github.com/warent/stdapi/myerrors"
 	"github.com/warent/stdapi/router"
 
 	"encoding/json"
@@ -33,7 +33,7 @@ func postUserValidateHandler(w http.ResponseWriter, r *http.Request) {
 
 	cache, err := aeproviders.AEConnectRedis(ctx)
 	if err != nil {
-		phrerrors.ServerError(w, r, err)
+		myerrors.ServerError(w, r, err)
 		return
 	}
 
@@ -47,13 +47,13 @@ func postUserValidateHandler(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	err = json.Unmarshal([]byte(r.Header.Get("X-Body")), &user)
 	if err != nil {
-		phrerrors.ServerError(w, r, err)
+		myerrors.ServerError(w, r, err)
 		return
 	}
 
 	validateStatus, err := user.Validate(userParams)
 	if err != nil {
-		phrerrors.ServerError(w, r, err)
+		myerrors.ServerError(w, r, err)
 		return
 	}
 
@@ -77,7 +77,7 @@ func postUserValidateHandler(w http.ResponseWriter, r *http.Request) {
 
 	isVerified, err := user.HasAccountFlag(userParams, models.UserAccountEmailVerified)
 	if err != nil {
-		phrerrors.ServerError(w, r, err)
+		myerrors.ServerError(w, r, err)
 		return
 	}
 	if !isVerified {

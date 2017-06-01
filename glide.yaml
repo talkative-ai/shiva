@@ -1,0 +1,26 @@
+package: github.com/warent/shiva
+import:
+- package: cloud.google.com/go
+  version: ^0.7.0
+  subpackages:
+  - datastore
+- package: github.com/go-redis/redis
+  version: ^6.4.1
+- package: github.com/warent/GoogleIdTokenVerifier
+- package: github.com/warent/apiai-go
+  version: ^2.2.4-beta
+- package: github.com/gorilla/mux
+  version: 780415097119f6f61c55475fe59b66f3c3e9ea53
+- package: golang.org/x/crypto
+  subpackages:
+  - bcrypt
+- package: golang.org/x/net
+  subpackages:
+  - context
+- package: google.golang.org/appengine
+  version: ^1.0.0
+  subpackages:
+  - datastore
+  - log
+  - taskqueue
+  - urlfetch
