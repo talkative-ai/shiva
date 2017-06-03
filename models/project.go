@@ -2,5 +2,5 @@ package models
 
 type Project struct {
 	Title   string
-	OwnerID string
+	OwnerID string `json:"-"`
 }

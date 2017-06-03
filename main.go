@@ -23,9 +23,9 @@ func main() {
 	doRoute(r, routes.GetIndex)
 
 	doRoute(r, routes.PostTokenValidate)
-	doRoute(r, routes.PostJWTValidate)
 
 	doRoute(r, routes.PostProject)
+	doRoute(r, routes.GetProject)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"https://aum.ai", "https://dev.aum.ai", "http://localhost:3000"},
