@@ -5,8 +5,8 @@ import (
 
 	"github.com/rs/cors"
 	"github.com/warent/shiva/routes"
-	"github.com/warent/stdapi/prehandle"
-	"github.com/warent/stdapi/router"
+	"github.com/warent/shiva/prehandle"
+	"github.com/warent/shiva/router"
 
 	"github.com/gorilla/mux"
 

@@ -8,10 +8,10 @@ import (
 	"cloud.google.com/go/datastore"
 
 	"github.com/warent/shiva/models"
-	"github.com/warent/stdapi/myerrors"
-	"github.com/warent/stdapi/router"
+	"github.com/warent/shiva/myerrors"
+	"github.com/warent/shiva/router"
 
-	"github.com/warent/stdapi/prehandle"
+	"github.com/warent/shiva/prehandle"
 )
 
 // GetProject router.Route

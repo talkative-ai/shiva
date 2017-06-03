@@ -1,5 +1,5 @@
-hash: b56db9d0167a077fd55e197848a253cb07a620e9c31bc80ce513d02c3dfafa5d
-updated: 2017-06-03T12:44:12.993718345-07:00
+hash: 464b44a46389d671d8c2a15f04e5d423a6322cebce9b9664fe23c57200410ef5
+updated: 2017-06-03T16:52:15.170849915-07:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -43,19 +43,6 @@ imports:
   version: f9c48787631d87cc3445060a1f9d6fac1c5772f3
 - name: github.com/warent/GoogleIdTokenVerifier
   version: c2ba7d4c13c2034cd1367779b972676e24f3025a
-- name: github.com/warent/stdapi
-  version: 4122170cb2f2814fa54cc69fc3426146b598ce84
-  subpackages:
-  - aeproviders
-  - myerrors
-  - prehandle
-  - router
-  - utilities
-- name: golang.org/x/crypto
-  version: e1a4589e7d3ea14a3352255d04b6f1a418845e5e
-  subpackages:
-  - bcrypt
-  - blowfish
 - name: golang.org/x/net
   version: e4fa1c5465ad6111f206fc92186b8c83d64adbe1
   subpackages:
@@ -92,7 +79,6 @@ imports:
 - name: google.golang.org/appengine
   version: 150dc57a1b433e64154302bdc40b6bb8aefa313a
   subpackages:
-  - datastore
   - internal
   - internal/app_identity
   - internal/base
@@ -101,11 +87,8 @@ imports:
   - internal/modules
   - internal/remote_api
   - internal/socket
-  - internal/taskqueue
   - internal/urlfetch
-  - log
   - socket
-  - taskqueue
   - urlfetch
 - name: google.golang.org/genproto
   version: aa2eb687b4d3e17154372564ad8d6bf11c3cf21f

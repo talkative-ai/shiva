@@ -1,29 +1,6 @@
 package: github.com/warent/shiva
 import:
-- package: cloud.google.com/go
-  version: ^0.7.0
-  subpackages:
-  - datastore
-- package: github.com/go-redis/redis
-  version: ^6.4.1
 - package: github.com/gorilla/mux
   version: bd09be08ed4377796d312df0a45314e11b8f5dc1
-- package: golang.org/x/crypto
-  subpackages:
-  - bcrypt
-- package: golang.org/x/net
-  subpackages:
-  - context
-- package: google.golang.org/appengine
-  version: ^1.0.0
-  subpackages:
-  - datastore
-  - log
-  - taskqueue
-  - urlfetch
 - package: github.com/gorilla/context
   version: ^1.1.0
-- package: github.com/op/go-logging
-  version: ^1.0.0
-- package: github.com/dgrijalva/jwt-go
-  version: ^3.0.0

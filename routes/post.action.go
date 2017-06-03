@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	apiai "github.com/warent/apiai-go"
-	"github.com/warent/stdapi/prehandle"
-	"github.com/warent/stdapi/router"
+	"github.com/warent/shiva/prehandle"
+	"github.com/warent/shiva/router"
 )
 
 // PostAction router.Route
