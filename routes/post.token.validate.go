@@ -2,11 +2,10 @@ package routes
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
-	"google.golang.org/appengine"
-	"google.golang.org/appengine/datastore"
-	"google.golang.org/appengine/urlfetch"
+	"cloud.google.com/go/datastore"
 
 	"github.com/warent/GoogleIdTokenVerifier"
 	"github.com/warent/stdapi/myerrors"
@@ -42,13 +41,13 @@ func postTokenValidateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := appengine.NewContext(r)
+	ctx := r.Context()
 
-	client := urlfetch.Client(ctx)
-	info, err := GoogleIdTokenVerifier.Verify(token.Token, "895662102905-6369ghd23tqhvrv9t26lfjmobj3hgmfn.apps.googleusercontent.com", client)
+	info, err := GoogleIdTokenVerifier.Verify(token.Token, "895662102905-6369ghd23tqhvrv9t26lfjmobj3hgmfn.apps.googleusercontent.com", nil)
 
 	if err != nil {
 		myerrors.Respond(w, &myerrors.MySimpleError{
+			Req:  r,
 			Code: http.StatusBadRequest,
 			Log:  err.Error(),
 			Message: map[string]string{
@@ -60,8 +59,8 @@ func postTokenValidateHandler(w http.ResponseWriter, r *http.Request) {
 
 	if !info.EmailVerified {
 		myerrors.Respond(w, &myerrors.MySimpleError{
+			Req:  r,
 			Code: http.StatusBadRequest,
-			Log:  err.Error(),
 			Message: map[string]string{
 				"message": "VERIFY_EMAIL",
 			},
@@ -69,17 +68,31 @@ func postTokenValidateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	k := datastore.NewIncompleteKey(ctx, "User", nil)
+	dsClient, err := datastore.NewClient(ctx, "artificial-universe-maker")
+	if err != nil {
+		myerrors.ServerError(w, r, err)
+		return
+	}
+
+	k := datastore.NameKey("User", info.Sub, nil)
 
 	type user struct {
-		Email string
+		Sub     string
+		Email   string
+		Name    string
+		Picture string
 	}
 
 	u := &user{
+		info.Sub,
 		info.Email,
+		info.Name,
+		info.Picture,
 	}
 
-	if _, err := datastore.Put(ctx, k, u); err != nil {
+	log.Printf("%v+", u)
+
+	if _, err := dsClient.Put(ctx, k, u); err != nil {
 		myerrors.ServerError(w, r, err)
 		return
 	}
