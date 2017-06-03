@@ -1,5 +1,5 @@
-hash: 53c1a9f1d8e013a6c4128384d33235f24dec23bcc9a5f7006889ce92c7cbde99
-updated: 2017-06-02T20:18:07.819907425-07:00
+hash: b56db9d0167a077fd55e197848a253cb07a620e9c31bc80ce513d02c3dfafa5d
+updated: 2017-06-03T12:44:12.993718345-07:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -11,7 +11,7 @@ imports:
   - internal/fields
   - internal/version
 - name: github.com/dgrijalva/jwt-go
-  version: 6c8dedd55f8a2e41f605de6d5d66e51ed1f299fc
+  version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
 - name: github.com/go-redis/redis
   version: 663bb76bcc3763c41877b63671003705a47289c5
   subpackages:
@@ -44,7 +44,7 @@ imports:
 - name: github.com/warent/GoogleIdTokenVerifier
   version: c2ba7d4c13c2034cd1367779b972676e24f3025a
 - name: github.com/warent/stdapi
-  version: 781480b546af6ff26ed02460cb75b4aae8ab46aa
+  version: 4122170cb2f2814fa54cc69fc3426146b598ce84
   subpackages:
   - aeproviders
   - myerrors

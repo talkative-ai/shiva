@@ -2,14 +2,18 @@ package routes
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 	"net/http"
 
 	"cloud.google.com/go/datastore"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/warent/GoogleIdTokenVerifier"
+	"github.com/warent/shiva/models"
 	"github.com/warent/stdapi/myerrors"
 	"github.com/warent/stdapi/router"
+
+	"time"
 
 	"github.com/warent/stdapi/prehandle"
 )
@@ -23,10 +27,14 @@ var PostTokenValidate = &router.Route{
 	Path:       "/v1/token/validate",
 	Method:     "POST",
 	Handler:    http.HandlerFunc(postTokenValidateHandler),
-	Prehandler: []prehandle.Prehandler{prehandle.RequireBody(5120)},
+	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.RequireBody(5120)},
 }
 
 func postTokenValidateHandler(w http.ResponseWriter, r *http.Request) {
+
+	type response struct {
+		JWT string
+	}
 
 	type Token struct {
 		Token    string `json:"token"`
@@ -47,23 +55,19 @@ func postTokenValidateHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		myerrors.Respond(w, &myerrors.MySimpleError{
-			Req:  r,
-			Code: http.StatusBadRequest,
-			Log:  err.Error(),
-			Message: map[string]string{
-				"message": "Bad token",
-			},
+			Req:     r,
+			Code:    http.StatusBadRequest,
+			Log:     err.Error(),
+			Message: "TOKEN_BAD",
 		})
 		return
 	}
 
 	if !info.EmailVerified {
 		myerrors.Respond(w, &myerrors.MySimpleError{
-			Req:  r,
-			Code: http.StatusBadRequest,
-			Message: map[string]string{
-				"message": "VERIFY_EMAIL",
-			},
+			Req:     r,
+			Code:    http.StatusBadRequest,
+			Message: "EMAIL_VERIFY",
 		})
 		return
 	}
@@ -76,24 +80,42 @@ func postTokenValidateHandler(w http.ResponseWriter, r *http.Request) {
 
 	k := datastore.NameKey("User", info.Sub, nil)
 
-	type user struct {
-		Sub     string
-		Email   string
-		Name    string
-		Picture string
+	u := &models.User{
+		Sub:     info.Sub,
+		Email:   info.Email,
+		Name:    info.Name,
+		Picture: info.Picture,
 	}
-
-	u := &user{
-		info.Sub,
-		info.Email,
-		info.Name,
-		info.Picture,
-	}
-
-	log.Printf("%v+", u)
 
 	if _, err := dsClient.Put(ctx, k, u); err != nil {
 		myerrors.ServerError(w, r, err)
 		return
 	}
+
+	userString, err := json.Marshal(u)
+	if err != nil {
+		myerrors.ServerError(w, r, err)
+		return
+	}
+
+	jwttoken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"Exp":  time.Now().Add(time.Minute * 10).Unix(),
+		"User": userString,
+	})
+
+	tokenString, err := jwttoken.SignedString([]byte("test"))
+	if err != nil {
+		myerrors.ServerError(w, r, err)
+		return
+	}
+
+	resp, err := json.Marshal(&response{
+		tokenString,
+	})
+	if err != nil {
+		myerrors.ServerError(w, r, err)
+		return
+	}
+
+	fmt.Fprintln(w, string(resp))
 }
