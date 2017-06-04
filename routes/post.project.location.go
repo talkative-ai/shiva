@@ -13,26 +13,31 @@ import (
 	"github.com/warent/shiva/prehandle"
 )
 
-// PostProject router.Route
+// PostProjectLocation router.Route
 // Path: "/user/register",
 // Method: "POST",
 // Accepts models.TokenValidate
 // Responds with status of success or failure
-var PostProject = &router.Route{
-	Path:       "/v1/project",
+var PostProjectLocation = &router.Route{
+	Path:       "/v1/project/location",
 	Method:     "POST",
-	Handler:    http.HandlerFunc(postProjectHandler),
+	Handler:    http.HandlerFunc(postProjectLocationHandler),
 	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.JWT, prehandle.RequireBody(65535)},
 }
 
-func postProjectHandler(w http.ResponseWriter, r *http.Request) {
+func postProjectLocationHandler(w http.ResponseWriter, r *http.Request) {
 
-	project := new(models.AumProject)
+	type request struct {
+		Key       int64                `json:"key"`
+		Locations []models.AumLocation `json:"locations"`
+	}
+
+	reqBody := new(request)
 	user := new(models.User)
 
 	ctx := r.Context()
 
-	err := json.Unmarshal([]byte(r.Header.Get("X-Body")), project)
+	err := json.Unmarshal([]byte(r.Header.Get("X-Body")), reqBody)
 	if err != nil {
 		myerrors.ServerError(w, r, err)
 		return
@@ -44,20 +49,21 @@ func postProjectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	project.OwnerID = user.Sub
-
 	dsClient, err := datastore.NewClient(ctx, "artificial-universe-maker")
 	if err != nil {
 		myerrors.ServerError(w, r, err)
 		return
 	}
 
-	k := datastore.IncompleteKey("Project", nil)
+	parentKey := datastore.IDKey("Project", reqBody.Key, nil)
 
-	_, err = dsClient.Put(ctx, k, project)
-	if err != nil {
-		myerrors.ServerError(w, r, err)
-		return
+	for _, location := range reqBody.Locations {
+		k := datastore.IncompleteKey("Location", parentKey)
+		_, err = dsClient.Put(ctx, k, &location)
+		if err != nil {
+			myerrors.ServerError(w, r, err)
+			return
+		}
 	}
 
 	return

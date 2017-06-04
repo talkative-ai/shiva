@@ -25,8 +25,11 @@ func main() {
 
 	doRoute(r, routes.PostTokenValidate)
 
+	doRoute(r, routes.GetProjects)
 	doRoute(r, routes.PostProject)
 	doRoute(r, routes.GetProject)
+	doRoute(r, routes.PatchProject)
+	doRoute(r, routes.PostProjectLocation)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"https://aum.ai", "https://workbench.aum.ai", "http://localhost:3000"},
@@ -35,7 +38,6 @@ func main() {
 		ExposedHeaders:   []string{"ETag", "X-Token"},
 	})
 
-	// Insert the middleware
 	http.Handle("/v1/", c.Handler(r))
 
 	// SSL

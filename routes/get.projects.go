@@ -14,19 +14,19 @@ import (
 	"github.com/warent/shiva/prehandle"
 )
 
-// GetProject router.Route
+// GetProjects router.Route
 // Path: "/user/register",
 // Method: "GET",
 // Accepts models.TokenValidate
 // Responds with status of success or failure
-var GetProject = &router.Route{
+var GetProjects = &router.Route{
 	Path:       "/v1/projects",
 	Method:     "GET",
 	Handler:    http.HandlerFunc(getProjectHandler),
 	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.JWT},
 }
 
-func getProjectHandler(w http.ResponseWriter, r *http.Request) {
+func getProjectsHandler(w http.ResponseWriter, r *http.Request) {
 	user := new(models.User)
 
 	err := json.Unmarshal([]byte(r.Header.Get("X-User")), user)
@@ -37,7 +37,7 @@ func getProjectHandler(w http.ResponseWriter, r *http.Request) {
 
 	dsClient, _ := datastore.NewClient(r.Context(), "artificial-universe-maker")
 
-	projects := make([]models.Project, 0)
+	projects := make([]models.AumProject, 0)
 
 	keys, _ := dsClient.GetAll(r.Context(), datastore.NewQuery("Project").Filter("OwnerID =", user.Sub), &projects)
 

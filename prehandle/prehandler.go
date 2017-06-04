@@ -76,7 +76,7 @@ func JWT(w http.ResponseWriter, r *http.Request) bool {
 	}
 
 	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"Exp":  time.Now().Add(time.Minute * 10).Unix(),
+		"Exp":  time.Now().Add(time.Minute * 6000).Unix(),
 		"User": token["User"],
 	})
 

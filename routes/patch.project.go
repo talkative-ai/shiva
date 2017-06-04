@@ -13,19 +13,19 @@ import (
 	"github.com/warent/shiva/prehandle"
 )
 
-// PostProject router.Route
+// PatchProject router.Route
 // Path: "/user/register",
-// Method: "POST",
+// Method: "PATCH",
 // Accepts models.TokenValidate
 // Responds with status of success or failure
-var PostProject = &router.Route{
+var PatchProject = &router.Route{
 	Path:       "/v1/project",
-	Method:     "POST",
-	Handler:    http.HandlerFunc(postProjectHandler),
+	Method:     "PATCH",
+	Handler:    http.HandlerFunc(patchProjectHandler),
 	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.JWT, prehandle.RequireBody(65535)},
 }
 
-func postProjectHandler(w http.ResponseWriter, r *http.Request) {
+func patchProjectHandler(w http.ResponseWriter, r *http.Request) {
 
 	project := new(models.AumProject)
 	user := new(models.User)
@@ -44,15 +44,13 @@ func postProjectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	project.OwnerID = user.Sub
-
 	dsClient, err := datastore.NewClient(ctx, "artificial-universe-maker")
 	if err != nil {
 		myerrors.ServerError(w, r, err)
 		return
 	}
 
-	k := datastore.IncompleteKey("Project", nil)
+	k := datastore.IDKey("Project", project.ID, nil)
 
 	_, err = dsClient.Put(ctx, k, project)
 	if err != nil {
