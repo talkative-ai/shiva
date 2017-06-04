@@ -20,7 +20,7 @@ import (
 // Accepts models.TokenValidate
 // Responds with status of success or failure
 var GetProject = &router.Route{
-	Path:       "/v1/project",
+	Path:       "/v1/projects",
 	Method:     "GET",
 	Handler:    http.HandlerFunc(getProjectHandler),
 	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.JWT},
@@ -39,7 +39,11 @@ func getProjectHandler(w http.ResponseWriter, r *http.Request) {
 
 	projects := make([]models.Project, 0)
 
-	dsClient.GetAll(r.Context(), datastore.NewQuery("Project").Filter("OwnerID =", user.Sub), &projects)
+	keys, _ := dsClient.GetAll(r.Context(), datastore.NewQuery("Project").Filter("OwnerID =", user.Sub), &projects)
+
+	for id, _ := range projects {
+		projects[id].ID = keys[id].ID
+	}
 
 	resp, err := json.Marshal(projects)
 	if err != nil {

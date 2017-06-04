@@ -1,12 +1,13 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/rs/cors"
-	"github.com/warent/shiva/routes"
 	"github.com/warent/shiva/prehandle"
 	"github.com/warent/shiva/router"
+	"github.com/warent/shiva/routes"
 
 	"github.com/gorilla/mux"
 
@@ -28,8 +29,9 @@ func main() {
 	doRoute(r, routes.GetProject)
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"https://aum.ai", "https://dev.aum.ai", "http://localhost:3000"},
+		AllowedOrigins:   []string{"https://aum.ai", "https://workbench.aum.ai", "http://localhost:3000"},
 		AllowCredentials: true,
+		AllowedHeaders:   []string{"x-token", "accept", "content-type"},
 	})
 
 	// Insert the middleware
@@ -37,6 +39,8 @@ func main() {
 
 	// SSL
 	http.HandleFunc(routes.GetWellknownAcmeChallenge.Path, routes.GetWellknownAcmeChallenge.Handler.(http.HandlerFunc))
+
+	log.Println("Starting server on localhost:8080")
 
 	appengine.Main()
 }
