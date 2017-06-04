@@ -22,7 +22,7 @@ import (
 var GetProjects = &router.Route{
 	Path:       "/v1/projects",
 	Method:     "GET",
-	Handler:    http.HandlerFunc(getProjectHandler),
+	Handler:    http.HandlerFunc(getProjectsHandler),
 	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.JWT},
 }
 
