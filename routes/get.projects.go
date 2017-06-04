@@ -41,7 +41,7 @@ func getProjectHandler(w http.ResponseWriter, r *http.Request) {
 
 	keys, _ := dsClient.GetAll(r.Context(), datastore.NewQuery("Project").Filter("OwnerID =", user.Sub), &projects)
 
-	for id, _ := range projects {
+	for id := range projects {
 		projects[id].ID = keys[id].ID
 	}
 

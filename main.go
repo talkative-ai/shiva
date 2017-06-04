@@ -32,6 +32,7 @@ func main() {
 		AllowedOrigins:   []string{"https://aum.ai", "https://workbench.aum.ai", "http://localhost:3000"},
 		AllowCredentials: true,
 		AllowedHeaders:   []string{"x-token", "accept", "content-type"},
+		ExposedHeaders:   []string{"ETag", "X-Token"},
 	})
 
 	// Insert the middleware
