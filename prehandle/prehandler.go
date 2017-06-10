@@ -24,7 +24,7 @@ func PreHandle(handle http.HandlerFunc, prehandlers ...Prehandler) http.HandlerF
 	return func(w http.ResponseWriter, r *http.Request) {
 		for _, pre := range prehandlers {
 			if !pre(w, r) {
-				// The prehandler signals a halt
+				// The prehandler signals an abort
 				return
 			}
 		}

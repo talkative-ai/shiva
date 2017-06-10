@@ -20,6 +20,10 @@ func ParseJTWClaims(tokenString string) (map[string]interface{}, error) {
 		return []byte(os.Getenv("JWT_KEY")), nil
 	})
 
+	if err != nil {
+		return nil, fmt.Errorf("JWT_INVALID")
+	}
+
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		return claims, nil
 	}

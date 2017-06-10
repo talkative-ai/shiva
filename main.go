@@ -32,7 +32,7 @@ func main() {
 	doRoute(r, routes.PostProjectLocation)
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"https://aum.ai", "https://workbench.aum.ai", "http://localhost:3000"},
+		AllowedOrigins:   []string{"https://aum.ai", "https://workbench.aum.ai", "http://localhost:3000", "http://localhost:3001"},
 		AllowCredentials: true,
 		AllowedHeaders:   []string{"x-token", "accept", "content-type"},
 		ExposedHeaders:   []string{"ETag", "X-Token"},
