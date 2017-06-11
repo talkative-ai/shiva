@@ -3,9 +3,10 @@ package models
 type AumID int64
 
 type AumProject struct {
-	ID      int64  `json:"id" datastore:"-"`
-	Title   string `json:"title"`
-	OwnerID string `json:"-"`
+	ID            int64  `json:"id" datastore:"-"`
+	Title         string `json:"title"`
+	OwnerID       string `json:"-"`
+	IntroLocation string `json:"-"`
 
 	NPCs      []AumNPC      `json:"npcs,omitempty" datastore:"-"`
 	Objects   []AumObject   `json:"objects,omitempty" datastore:"-"`
@@ -13,26 +14,33 @@ type AumProject struct {
 	Notes     []AumNote     `json:"notes,omitempty" datastore:"-"`
 }
 
+type AumDialogue struct {
+	ID     *int64 `json:"id`
+	Title  string `json:"title"`
+	Dialog string `json:"dialog"`
+}
+
 type AumNPC struct {
-	ID    int64 `json:"id" datastore:"-"`
-	Title string
+	ID    *int64 `json:"id" datastore:"-"`
+	Title string `json:"title"`
 	// TODO: Define a conversational dialog structure
-	CustomProperties []AumCustomProperties
-	Conditionals     []AumConditional
+	Conditionals     []AumConditional      `json:"conditionals,omitempty"`
+	CustomProperties []AumCustomProperties `json:"custom_properties,omitempty"`
 }
 
 type AumObject struct {
-	ID                int64 `json:"id" datastore:"-"`
-	Title             string
-	Container         bool
-	Carriable         bool
-	ContainerContents []int64
-	Conditionals      []AumConditional
-	CustomProperties  []AumCustomProperties
+	ID                *int64                `json:"id" datastore:"-"`
+	Title             string                `json:"title"`
+	Container         bool                  `json:"container"`
+	Carriable         bool                  `json:"carriable"`
+	Locations         []int64               `json:"locations,omitempty"`          // Expected array of LocationIDs
+	ContainerContents []int64               `json:"container_contents,omitempty"` // Expected array of Object IDs
+	Conditionals      []AumConditional      `json:"conditionals,omitempty"`
+	CustomProperties  []AumCustomProperties `json:"custom_properties,omitempty"`
 }
 
 type AumLocation struct {
-	ID               int64                 `json:"id" datastore:"-"`
+	ID               *int64                `json:"id" datastore:"-"`
 	Title            string                `json:"title"`
 	Conditionals     []AumConditional      `json:"conditionals,omitempty"`
 	Objects          []int64               `json:"objects,omitempty"`
@@ -48,9 +56,9 @@ type AumLocationLink struct {
 }
 
 type AumNote struct {
-	ID    int64 `json:"id" datastore:"-"`
-	Title string
-	Text  string
+	ID    *int64 `json:"id" datastore:"-"`
+	Title string `json:"title"`
+	Text  string `json:"text"`
 }
 
 type AumConditional struct {

@@ -56,28 +56,28 @@ func getProjectHandler(w http.ResponseWriter, r *http.Request) {
 	locations := make([]models.AumLocation, 0)
 	keys, _ := dsClient.GetAll(r.Context(), datastore.NewQuery("Location").Ancestor(projectKey), &locations)
 	for id := range locations {
-		locations[id].ID = keys[id].ID
+		locations[id].ID = &keys[id].ID
 	}
 	project.Locations = locations
 
 	objects := make([]models.AumObject, 0)
 	keys, _ = dsClient.GetAll(r.Context(), datastore.NewQuery("Object").Ancestor(projectKey), &objects)
 	for id := range objects {
-		objects[id].ID = keys[id].ID
+		objects[id].ID = &keys[id].ID
 	}
 	project.Objects = objects
 
 	npcs := make([]models.AumNPC, 0)
 	keys, _ = dsClient.GetAll(r.Context(), datastore.NewQuery("NPC").Ancestor(projectKey), &npcs)
 	for id := range npcs {
-		npcs[id].ID = keys[id].ID
+		npcs[id].ID = &keys[id].ID
 	}
 	project.NPCs = npcs
 
 	Notes := make([]models.AumNote, 0)
 	keys, _ = dsClient.GetAll(r.Context(), datastore.NewQuery("Note").Ancestor(projectKey), &Notes)
 	for id := range Notes {
-		Notes[id].ID = keys[id].ID
+		Notes[id].ID = &keys[id].ID
 	}
 	project.Notes = Notes
 
