@@ -26,6 +26,8 @@ type AumNPC struct {
 	// TODO: Define a conversational dialog structure
 	Conditionals     []AumConditional      `json:"conditionals,omitempty"`
 	CustomProperties []AumCustomProperties `json:"custom_properties,omitempty"`
+
+	Created *string `json:"created,omitempty" datastore:"-"`
 }
 
 type AumObject struct {
@@ -37,6 +39,8 @@ type AumObject struct {
 	ContainerContents []int64               `json:"container_contents,omitempty"` // Expected array of Object IDs
 	Conditionals      []AumConditional      `json:"conditionals,omitempty"`
 	CustomProperties  []AumCustomProperties `json:"custom_properties,omitempty"`
+
+	Created *string `json:"created,omitempty" datastore:"-"`
 }
 
 type AumLocation struct {
@@ -47,7 +51,8 @@ type AumLocation struct {
 	NPCs             []int64               `json:"npcs,omitempty"`
 	LinkedLocations  []AumLocationLink     `json:"linked_locations,omitempty"`
 	CustomProperties []AumCustomProperties `json:"custom_properties,omitempty"`
-	Created          *string               `json:"created,omit" datastore:"-"`
+
+	Created *string `json:"created,omitempty" datastore:"-"`
 }
 
 type AumLocationLink struct {
@@ -60,6 +65,8 @@ type AumNote struct {
 	ID    *int64 `json:"id" datastore:"-"`
 	Title string `json:"title"`
 	Text  string `json:"text"`
+
+	Created *string `json:"created,omitempty" datastore:"-"`
 }
 
 type AumConditional struct {
