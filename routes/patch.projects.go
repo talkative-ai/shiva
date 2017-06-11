@@ -2,6 +2,7 @@ package routes
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"cloud.google.com/go/datastore"
@@ -18,14 +19,14 @@ import (
 // Method: "PATCH",
 // Accepts models.TokenValidate
 // Responds with status of success or failure
-var PatchProject = &router.Route{
-	Path:       "/v1/project",
+var PatchProjects = &router.Route{
+	Path:       "/v1/projects",
 	Method:     "PATCH",
-	Handler:    http.HandlerFunc(patchProjectHandler),
+	Handler:    http.HandlerFunc(patchProjectsHandler),
 	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.JWT, prehandle.RequireBody(65535)},
 }
 
-func patchProjectHandler(w http.ResponseWriter, r *http.Request) {
+func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 
 	project := new(models.AumProject)
 	user := new(models.User)
@@ -53,19 +54,28 @@ func patchProjectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	generatedKeys := map[string]int64{}
+
 	for _, location := range project.Locations {
 		var k *datastore.Key
 		if location.ID != nil {
 			k = datastore.IDKey("Location", *location.ID, projectKey)
 		} else {
+			// If no ID is specified, Created must be specified with a temporary ID
+			// This will map the newly generated ID back to the frontend
+			if location.Created == nil {
+				continue
+			}
 			k = datastore.IncompleteKey("Location", projectKey)
 		}
 
-		_, err = dsClient.Put(ctx, k, &location)
+		newk, err := dsClient.Put(ctx, k, &location)
 		if err != nil {
 			myerrors.ServerError(w, r, err)
 			return
 		}
+
+		generatedKeys[*location.Created] = newk.ID
 	}
 
 	for _, object := range project.Objects {
@@ -119,5 +129,11 @@ func patchProjectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	return
+	resp, err := json.Marshal(generatedKeys)
+	if err != nil {
+		myerrors.ServerError(w, r, err)
+		return
+	}
+
+	fmt.Fprintln(w, string(resp))
 }

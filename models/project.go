@@ -47,6 +47,7 @@ type AumLocation struct {
 	NPCs             []int64               `json:"npcs,omitempty"`
 	LinkedLocations  []AumLocationLink     `json:"linked_locations,omitempty"`
 	CustomProperties []AumCustomProperties `json:"custom_properties,omitempty"`
+	Created          *string               `json:"created,omit" datastore:"-"`
 }
 
 type AumLocationLink struct {

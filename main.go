@@ -28,7 +28,7 @@ func main() {
 	doRoute(r, routes.GetProjects)
 	doRoute(r, routes.PostProject)
 	doRoute(r, routes.GetProject)
-	doRoute(r, routes.PatchProject)
+	doRoute(r, routes.PatchProjects)
 	doRoute(r, routes.PostProjectLocation)
 
 	c := cors.New(cors.Options{
@@ -36,6 +36,7 @@ func main() {
 		AllowCredentials: true,
 		AllowedHeaders:   []string{"x-token", "accept", "content-type"},
 		ExposedHeaders:   []string{"ETag", "X-Token"},
+		AllowedMethods:   []string{"GET", "PATCH", "POST"},
 	})
 
 	http.Handle("/v1/", c.Handler(r))
