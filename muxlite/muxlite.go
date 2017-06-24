@@ -8,9 +8,9 @@ import (
 type Method string
 
 const (
-	GET  Method = "GET"
-	POST        = "POST"
-	ALL         = "ALL"
+	MethodGet  Method = "GET"
+	MethodPost        = "POST"
+	MethodAll         = "ALL"
 )
 
 type PathNode struct {
@@ -79,7 +79,7 @@ func (r *Router) Handle(path string, handler http.HandlerFunc) *Route {
 	for _, slug := range slugs {
 		if _, exist := currentNodeMap[slug]; !exist {
 			newNode := &PathNode{
-				Value:    slugs[0],
+				Value:    slug,
 				Children: map[string]*PathNode{},
 			}
 			currentNodeMap[slug] = newNode
@@ -95,7 +95,7 @@ func (r *Router) Handle(path string, handler http.HandlerFunc) *Route {
 		currentNode.Routes = map[Method]*Route{}
 	}
 
-	currentNode.Routes[ALL] = newRoute
+	currentNode.Routes[MethodAll] = newRoute
 
 	return newRoute
 }
