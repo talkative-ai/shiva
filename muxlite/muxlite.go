@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -42,6 +43,9 @@ func trim(s string, char byte) string {
 
 	return s
 }
+
+var reqCount int64
+var varStore map[int64]map[string]string
 
 func prune(s string, char byte) string {
 	var prev byte
@@ -126,6 +130,7 @@ func (r *Router) Handle(path string, handler http.HandlerFunc) *Route {
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	reqCount++
 	path := trim(prune(req.URL.Path, '/'), '/')
 	slugs := strings.Split(path, "/")
 	var currentNode *PathNode
@@ -155,7 +160,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				break
 			}
 		}
-		if !success {
+		if success {
 			break
 		}
 		currentNode = currentNodeMap[slug]
@@ -166,6 +171,11 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		for _, route := range currentNode.Routes {
 			for _, method := range route.methods {
 				if method == req.Method {
+					varStore[reqCount] = vars
+					defer func() {
+						delete(varStore, reqCount)
+					}()
+					req.Header.Set("-muxlite-req", string(reqCount))
 					route.handler(w, req)
 					return
 				}
@@ -178,7 +188,17 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	return
 }
 
+func Vars(r *http.Request) (map[string]string, error) {
+	reqNum, err := strconv.ParseInt(r.Header.Get("-muxlite-req"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return varStore[reqNum], nil
+}
+
 func NewRouter() *Router {
+	reqCount = 0
+	varStore = map[int64]map[string]string{}
 	return &Router{
 		routes: map[string]*PathNode{},
 	}
