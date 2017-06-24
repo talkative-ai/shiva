@@ -9,14 +9,14 @@ import (
 	"cloud.google.com/go/datastore"
 
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/warent/GoogleIdTokenVerifier"
-	"github.com/warent/shiva/models"
-	"github.com/warent/shiva/myerrors"
-	"github.com/warent/shiva/router"
+	"github.com/artificial-universe-maker/GoogleIdTokenVerifier"
+	"github.com/artificial-universe-maker/shiva/models"
+	"github.com/artificial-universe-maker/shiva/myerrors"
+	"github.com/artificial-universe-maker/shiva/router"
 
 	"time"
 
-	"github.com/warent/shiva/prehandle"
+	"github.com/artificial-universe-maker/shiva/prehandle"
 )
 
 // PostTokenValidate router.Route

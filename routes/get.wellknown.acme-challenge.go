@@ -4,9 +4,9 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/warent/shiva/router"
+	"github.com/artificial-universe-maker/shiva/router"
 
-	"github.com/warent/shiva/prehandle"
+	"github.com/artificial-universe-maker/shiva/prehandle"
 )
 
 // GetWellknownAcmeChallenge router.Route

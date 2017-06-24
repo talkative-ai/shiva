@@ -6,11 +6,11 @@ import (
 
 	"cloud.google.com/go/datastore"
 
-	"github.com/warent/shiva/models"
-	"github.com/warent/shiva/myerrors"
-	"github.com/warent/shiva/router"
+	"github.com/artificial-universe-maker/shiva/models"
+	"github.com/artificial-universe-maker/shiva/myerrors"
+	"github.com/artificial-universe-maker/shiva/router"
 
-	"github.com/warent/shiva/prehandle"
+	"github.com/artificial-universe-maker/shiva/prehandle"
 )
 
 // PostProjectLocation router.Route

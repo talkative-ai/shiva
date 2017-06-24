@@ -1,6 +1,2 @@
-package: github.com/warent/shiva
-import:
-- package: github.com/gorilla/mux
-  version: bd09be08ed4377796d312df0a45314e11b8f5dc1
-- package: github.com/gorilla/context
-  version: ^1.1.0
+package: github.com/artificial-universe-maker/shiva
+import: []

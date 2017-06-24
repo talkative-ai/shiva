@@ -3,9 +3,9 @@ package router
 import (
 	"net/http"
 
-	"github.com/warent/shiva/prehandle"
+	"github.com/artificial-universe-maker/shiva/prehandle"
 
-	mux "github.com/warent/shiva/muxlite"
+	mux "github.com/artificial-universe-maker/shiva/muxlite"
 )
 
 // Route contains route information for multiplexing
