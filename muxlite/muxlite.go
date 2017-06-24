@@ -5,10 +5,18 @@ import (
 	"strings"
 )
 
+type Method string
+
+const (
+	GET  Method = "GET"
+	POST        = "POST"
+	ALL         = "ALL"
+)
+
 type PathNode struct {
 	Value    string
 	Children map[string]*PathNode
-	Routes   []*Route
+	Routes   map[Method]*Route
 }
 
 type Router struct {
@@ -16,10 +24,10 @@ type Router struct {
 }
 
 type Route struct {
-	path    string
-	handler http.HandlerFunc
-	methods []string
-	router  *Router
+	path       string
+	handler    http.HandlerFunc
+	methods    []string
+	parentNode *PathNode
 }
 
 func trim(s string, char byte) string {
@@ -45,9 +53,14 @@ func prune(s string, char byte) string {
 	return s
 }
 
-func (r *Route) Methods(methods ...string) {
+func (r *Route) Methods(methods ...Method) {
+	for routeMethod, route := range r.parentNode.Routes {
+		if route == r {
+			r.parentNode.Routes[routeMethod] = nil
+		}
+	}
 	for _, method := range methods {
-		r.methods = append(r.methods, method)
+		r.parentNode.Routes[method] = r
 	}
 }
 
@@ -56,7 +69,6 @@ func (r *Router) Handle(path string, handler http.HandlerFunc) *Route {
 		path:    path,
 		handler: handler,
 		methods: []string{},
-		router:  r,
 	}
 
 	path = trim(prune(path, '/'), '/')
@@ -77,11 +89,13 @@ func (r *Router) Handle(path string, handler http.HandlerFunc) *Route {
 		currentNodeMap = currentNodeMap[slug].Children
 	}
 
+	newRoute.parentNode = currentNode
+
 	if currentNode.Routes == nil {
-		currentNode.Routes = []*Route{}
+		currentNode.Routes = map[Method]*Route{}
 	}
 
-	currentNode.Routes = append(currentNode.Routes, newRoute)
+	currentNode.Routes[ALL] = newRoute
 
 	return newRoute
 }
