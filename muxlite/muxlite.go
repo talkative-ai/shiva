@@ -11,9 +11,10 @@ import (
 type Method string
 
 const (
-	MethodGet  Method = "GET"
-	MethodPost        = "POST"
-	MethodAll         = "ALL"
+	MethodGet   Method = "GET"
+	MethodPost         = "POST"
+	MethodPatch        = "PATCH"
+	MethodAll          = "ALL"
 )
 
 type PathNode struct {
@@ -28,8 +29,8 @@ type Router struct {
 
 type Route struct {
 	path       string
-	handler    http.HandlerFunc
-	methods    []string
+	handler    *http.HandlerFunc
+	methods    []Method
 	parentNode *PathNode
 }
 
@@ -44,8 +45,8 @@ func trim(s string, char byte) string {
 	return s
 }
 
-var reqCount int64
-var varStore map[int64]map[string]string
+var reqCount int
+var varStore map[int]map[string]string
 
 func prune(s string, char byte) string {
 	var prev byte
@@ -96,8 +97,8 @@ func parseExpr(s string) (v string, expr string, err error) {
 func (r *Router) Handle(path string, handler http.HandlerFunc) *Route {
 	newRoute := &Route{
 		path:    path,
-		handler: handler,
-		methods: []string{},
+		handler: &handler,
+		methods: []Method{},
 	}
 
 	path = trim(prune(path, '/'), '/')
@@ -138,9 +139,9 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	success := false
 
 	vars := map[string]string{}
-
 	for _, slug := range slugs {
 		success = false
+		nextKey := slug
 		for k := range currentNodeMap {
 
 			v, expr, err := parseExpr(k)
@@ -150,6 +151,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				str := r.FindString(slug)
 				if str != "" {
 					vars[v] = str
+					nextKey = k
 					success = true
 					break
 				}
@@ -161,24 +163,24 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			}
 		}
 		if success {
+			currentNode = currentNodeMap[nextKey]
+			currentNodeMap = currentNode.Children
+		}
+		if !success {
 			break
 		}
-		currentNode = currentNodeMap[slug]
-		currentNodeMap = currentNodeMap[slug].Children
 	}
 
 	if success {
-		for _, route := range currentNode.Routes {
-			for _, method := range route.methods {
-				if method == req.Method {
-					varStore[reqCount] = vars
-					defer func() {
-						delete(varStore, reqCount)
-					}()
-					req.Header.Set("-muxlite-req", string(reqCount))
-					route.handler(w, req)
-					return
-				}
+		for method, route := range currentNode.Routes {
+			if (method == Method(req.Method) || method == "ALL") && route != nil {
+				varStore[reqCount] = vars
+				defer func() {
+					delete(varStore, reqCount)
+				}()
+				req.Header.Set("-muxlite-req", strconv.Itoa(reqCount))
+				(*route.handler)(w, req)
+				return
 			}
 		}
 	}
@@ -188,17 +190,14 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	return
 }
 
-func Vars(r *http.Request) (map[string]string, error) {
-	reqNum, err := strconv.ParseInt(r.Header.Get("-muxlite-req"), 10, 64)
-	if err != nil {
-		return nil, err
-	}
-	return varStore[reqNum], nil
+func Vars(r *http.Request) map[string]string {
+	reqNum, _ := strconv.Atoi(r.Header.Get("-muxlite-req"))
+	return varStore[reqNum]
 }
 
 func NewRouter() *Router {
 	reqCount = 0
-	varStore = map[int64]map[string]string{}
+	varStore = map[int]map[string]string{}
 	return &Router{
 		routes: map[string]*PathNode{},
 	}

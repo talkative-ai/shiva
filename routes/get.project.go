@@ -13,7 +13,7 @@ import (
 
 	"strconv"
 
-	"github.com/gorilla/mux"
+	mux "github.com/warent/shiva/muxlite"
 	"github.com/warent/shiva/prehandle"
 )
 

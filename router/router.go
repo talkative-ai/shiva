@@ -5,14 +5,14 @@ import (
 
 	"github.com/warent/shiva/prehandle"
 
-	"github.com/gorilla/mux"
+	mux "github.com/warent/shiva/muxlite"
 )
 
 // Route contains route information for multiplexing
 type Route struct {
 	http.Handler
 	Prehandler []prehandle.Prehandler
-	Method     string
+	Method     mux.Method
 	Path       string
 }
 
