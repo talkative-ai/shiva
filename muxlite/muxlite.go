@@ -1,7 +1,9 @@
 package muxlite
 
 import (
+	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 )
 
@@ -64,6 +66,29 @@ func (r *Route) Methods(methods ...Method) {
 	}
 }
 
+func parseExpr(s string) (v string, expr string, err error) {
+	if len(s) <= 2 {
+		return "", "", fmt.Errorf("String too small")
+	}
+
+	if s[0] == '{' && s[len(s)-1] == '}' {
+		s = s[1 : len(s)-1]
+	} else {
+		return "", "", fmt.Errorf("Not an expression")
+	}
+
+	parts := strings.Split(s, ":")
+	if len(parts) != 2 {
+		return "", "", fmt.Errorf("Not an expression")
+	}
+
+	v = parts[0]
+	expr = parts[1]
+	err = nil
+
+	return
+}
+
 func (r *Router) Handle(path string, handler http.HandlerFunc) *Route {
 	newRoute := &Route{
 		path:    path,
@@ -105,18 +130,39 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	slugs := strings.Split(path, "/")
 	var currentNode *PathNode
 	currentNodeMap := r.routes
-	fail := false
+	success := false
+
+	vars := map[string]string{}
 
 	for _, slug := range slugs {
-		if _, exist := currentNodeMap[slug]; !exist {
-			fail = true
+		success = false
+		for k := range currentNodeMap {
+
+			v, expr, err := parseExpr(k)
+
+			if err == nil {
+				r, _ := regexp.Compile(expr)
+				str := r.FindString(slug)
+				if str != "" {
+					vars[v] = str
+					success = true
+					break
+				}
+			}
+
+			if err != nil && slug == k {
+				success = true
+				break
+			}
+		}
+		if !success {
 			break
 		}
 		currentNode = currentNodeMap[slug]
 		currentNodeMap = currentNodeMap[slug].Children
 	}
 
-	if !fail {
+	if success {
 		for _, route := range currentNode.Routes {
 			for _, method := range route.methods {
 				if method == req.Method {
