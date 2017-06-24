@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/rs/cors"
-	mux "github.com/artificial-universe-maker/shiva/muxlite"
+	mux "github.com/artificial-universe-maker/muxlite"
 	"github.com/artificial-universe-maker/shiva/prehandle"
 	"github.com/artificial-universe-maker/shiva/router"
 	"github.com/artificial-universe-maker/shiva/routes"

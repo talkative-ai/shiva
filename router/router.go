@@ -5,7 +5,7 @@ import (
 
 	"github.com/artificial-universe-maker/shiva/prehandle"
 
-	mux "github.com/artificial-universe-maker/shiva/muxlite"
+	mux "github.com/artificial-universe-maker/muxlite"
 )
 
 // Route contains route information for multiplexing
