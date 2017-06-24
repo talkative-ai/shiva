@@ -6,7 +6,7 @@ type AumProject struct {
 	ID            int64  `json:"id" datastore:"-"`
 	Title         string `json:"title"`
 	OwnerID       string `json:"-"`
-	IntroLocation string `json:"-"`
+	StartLocation int64  `json:"startLocation,omitempty"` // Expected Location ID
 
 	NPCs      []AumNPC      `json:"npcs,omitempty" datastore:"-"`
 	Objects   []AumObject   `json:"objects,omitempty" datastore:"-"`
@@ -15,7 +15,7 @@ type AumProject struct {
 }
 
 type AumDialogue struct {
-	ID     *int64 `json:"id`
+	ID     *int64 `json:"id"`
 	Title  string `json:"title"`
 	Dialog string `json:"dialog"`
 }
@@ -25,7 +25,7 @@ type AumNPC struct {
 	Title string `json:"title"`
 	// TODO: Define a conversational dialog structure
 	Conditionals     []AumConditional      `json:"conditionals,omitempty"`
-	CustomProperties []AumCustomProperties `json:"custom_properties,omitempty"`
+	CustomProperties []AumCustomProperties `json:"customProperties,omitempty"`
 
 	Created *string `json:"created,omitempty" datastore:"-"`
 }
@@ -35,10 +35,10 @@ type AumObject struct {
 	Title             string                `json:"title"`
 	Container         bool                  `json:"container"`
 	Carriable         bool                  `json:"carriable"`
-	Locations         []int64               `json:"locations,omitempty"`          // Expected array of LocationIDs
-	ContainerContents []int64               `json:"container_contents,omitempty"` // Expected array of Object IDs
+	Locations         []int64               `json:"locations,omitempty"`         // Expected array of Location IDs
+	ContainerContents []int64               `json:"containerContents,omitempty"` // Expected array of Object IDs
 	Conditionals      []AumConditional      `json:"conditionals,omitempty"`
-	CustomProperties  []AumCustomProperties `json:"custom_properties,omitempty"`
+	CustomProperties  []AumCustomProperties `json:"customProperties,omitempty"`
 
 	Created *string `json:"created,omitempty" datastore:"-"`
 }
@@ -46,11 +46,12 @@ type AumObject struct {
 type AumLocation struct {
 	ID               *int64                `json:"id" datastore:"-"`
 	Title            string                `json:"title"`
+	Description      string                `json:"description"`
 	Conditionals     []AumConditional      `json:"conditionals,omitempty"`
 	Objects          []int64               `json:"objects,omitempty"`
 	NPCs             []int64               `json:"npcs,omitempty"`
-	LinkedLocations  []AumLocationLink     `json:"linked_locations,omitempty"`
-	CustomProperties []AumCustomProperties `json:"custom_properties,omitempty"`
+	LinkedLocations  []AumLocationLink     `json:"linkedLocations,omitempty"`
+	CustomProperties []AumCustomProperties `json:"customProperties,omitempty"`
 
 	Created *string `json:"created,omitempty" datastore:"-"`
 }

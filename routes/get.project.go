@@ -32,9 +32,15 @@ var GetProject = &router.Route{
 func getProjectHandler(w http.ResponseWriter, r *http.Request) {
 	user := new(models.User)
 
-	id, _ := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
+	urlparams := mux.Vars(r)
 
-	err := json.Unmarshal([]byte(r.Header.Get("X-User")), user)
+	id, err := strconv.ParseInt(urlparams["id"], 10, 64)
+	if err != nil {
+		myerrors.ServerError(w, r, fmt.Errorf("%v+", urlparams))
+		return
+	}
+
+	err = json.Unmarshal([]byte(r.Header.Get("X-User")), user)
 	if err != nil {
 		myerrors.ServerError(w, r, err)
 		return

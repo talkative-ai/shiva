@@ -5,11 +5,10 @@ import (
 	"net/http"
 
 	"github.com/rs/cors"
+	mux "github.com/warent/shiva/muxlite"
 	"github.com/warent/shiva/prehandle"
 	"github.com/warent/shiva/router"
 	"github.com/warent/shiva/routes"
-
-	"github.com/gorilla/mux"
 
 	"google.golang.org/appengine"
 )

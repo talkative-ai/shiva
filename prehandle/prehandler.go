@@ -4,6 +4,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	"time"
 
@@ -53,6 +54,7 @@ func JWT(w http.ResponseWriter, r *http.Request) bool {
 	token, err := utilities.ParseJTWClaims(tkn)
 	if err != nil {
 		myerrors.Respond(w, &myerrors.MySimpleError{
+			Req:     r,
 			Code:    http.StatusBadRequest,
 			Message: err.Error(),
 		})
@@ -61,6 +63,7 @@ func JWT(w http.ResponseWriter, r *http.Request) bool {
 
 	if err != nil {
 		myerrors.Respond(w, &myerrors.MySimpleError{
+			Req:     r,
 			Code:    http.StatusBadRequest,
 			Message: err.Error(),
 		})
@@ -69,6 +72,7 @@ func JWT(w http.ResponseWriter, r *http.Request) bool {
 
 	if roundD(token["Exp"].(float64)) < time.Now().Unix() {
 		myerrors.Respond(w, &myerrors.MySimpleError{
+			Req:     r,
 			Code:    http.StatusUnauthorized,
 			Message: "JWT_EXPIRED",
 		})
@@ -80,11 +84,12 @@ func JWT(w http.ResponseWriter, r *http.Request) bool {
 		"User": token["User"],
 	})
 
-	tokenString, err := newToken.SignedString([]byte("test"))
+	tokenString, err := newToken.SignedString([]byte(os.Getenv("JWT_KEY")))
 
 	decodedUser, err := base64.StdEncoding.DecodeString(token["User"].(string))
 	if err != nil {
 		myerrors.Respond(w, &myerrors.MySimpleError{
+			Req:     r,
 			Code:    http.StatusBadRequest,
 			Message: err.Error(),
 		})
@@ -104,6 +109,7 @@ func RequireBody(limit int64) Prehandler {
 	return func(w http.ResponseWriter, r *http.Request) bool {
 		if r.Body == nil {
 			myerrors.Respond(w, &myerrors.MySimpleError{
+				Req:     r,
 				Code:    http.StatusBadRequest,
 				Message: "EMPTY_BODY",
 			})
@@ -113,6 +119,7 @@ func RequireBody(limit int64) Prehandler {
 		body, err := ioutil.ReadAll(io.LimitReader(r.Body, limit))
 		if err != nil {
 			myerrors.Respond(w, &myerrors.MySimpleError{
+				Req:     r,
 				Code:    http.StatusBadRequest,
 				Message: err.Error(),
 			})

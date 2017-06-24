@@ -35,11 +35,19 @@ func getProjectsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dsClient, _ := datastore.NewClient(r.Context(), "artificial-universe-maker")
+	dsClient, err := datastore.NewClient(r.Context(), "artificial-universe-maker")
+	if err != nil {
+		myerrors.ServerError(w, r, err)
+		return
+	}
 
 	projects := make([]models.AumProject, 0)
 
-	keys, _ := dsClient.GetAll(r.Context(), datastore.NewQuery("Project").Filter("OwnerID =", user.Sub), &projects)
+	keys, err := dsClient.GetAll(r.Context(), datastore.NewQuery("Project").Filter("OwnerID =", user.Sub), &projects)
+	if err != nil {
+		myerrors.ServerError(w, r, err)
+		return
+	}
 
 	for id := range projects {
 		projects[id].ID = keys[id].ID

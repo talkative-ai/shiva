@@ -21,7 +21,7 @@ func ParseJTWClaims(tokenString string) (map[string]interface{}, error) {
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("JWT_INVALID")
+		return nil, fmt.Errorf("JWT_INVALID", err)
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {

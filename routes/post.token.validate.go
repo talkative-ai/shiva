@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 
 	"cloud.google.com/go/datastore"
 
@@ -103,7 +104,7 @@ func postTokenValidateHandler(w http.ResponseWriter, r *http.Request) {
 		"User": userString,
 	})
 
-	tokenString, err := jwttoken.SignedString([]byte("test"))
+	tokenString, err := jwttoken.SignedString([]byte(os.Getenv("JWT_KEY")))
 	if err != nil {
 		myerrors.ServerError(w, r, err)
 		return
