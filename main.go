@@ -11,8 +11,6 @@ import (
 	"github.com/artificial-universe-maker/shiva/router"
 	"github.com/artificial-universe-maker/shiva/routes"
 	"github.com/rs/cors"
-
-	"google.golang.org/appengine"
 )
 
 func doRoute(r *mux.Router, route *router.Route) {
@@ -36,7 +34,6 @@ func main() {
 	doRoute(r, routes.PostProject)
 	doRoute(r, routes.GetProject)
 	doRoute(r, routes.PatchProjects)
-	doRoute(r, routes.PostProjectLocation)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"https://aum.ai", "https://workbench.aum.ai", "http://localhost:3000", "http://localhost:3001"},
@@ -53,5 +50,5 @@ func main() {
 
 	log.Println("Starting server on localhost:8080")
 
-	appengine.Main()
+	http.ListenAndServe(":8080", nil)
 }

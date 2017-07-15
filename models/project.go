@@ -4,77 +4,63 @@ import (
 	"time"
 )
 
-type AumID int64
-
 type AumModel struct {
-	ID        *uint64   `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
+	ID        *uint32    `json:"id"`
+	CreatedAt *time.Time `json:"created_at"`
 }
 
 type AumEntity struct {
 	Title   string  `json:"title"`
-	Created *string `json:"created,omitempty" db:"-"`
+	Created *string `json:"created_at,omitempty" db:"-"`
 }
 
 type AumProject struct {
 	AumModel
-	OwnerID       string `json:"-"`
-	StartLocation int64  `json:"startLocation,omitempty"` // Expected Location ID
+	AumEntity
+	OwnerID   string `json:"-"`
+	StartZone uint32 `json:"startZone,omitempty"` // Expected Zone ID
 
-	NPCs      []AumNPC      `json:"npcs,omitempty" db:"-"`
-	Objects   []AumObject   `json:"objects,omitempty" db:"-"`
-	Locations []AumLocation `json:"locations,omitempty" db:"-"`
-	Notes     []AumNote     `json:"notes,omitempty" db:"-"`
+	Actors []AumActor `json:"actors,omitempty" db:"-"`
+	Zones  []AumZone  `json:"locations,omitempty" db:"-"`
+	Notes  []AumNote  `json:"notes,omitempty" db:"-"`
 }
 
-type AumDialogue struct {
+type AumDialog struct {
 	AumModel
 	AumEntity
 	Dialog string `json:"dialog"`
 }
 
-type AumNPC struct {
+type AumActor struct {
 	AumModel
 	AumEntity
+
+	Container         bool     `json:"container"`
+	Carriable         bool     `json:"carriable"`
+	ContainerContents []uint32 `json:"containerContents,omitempty"` // Expected array of Object IDs
 
 	// TODO: Define a conversational dialog structure
 	Conditionals     []AumConditional      `json:"conditionals,omitempty"`
 	CustomProperties []AumCustomProperties `json:"customProperties,omitempty"`
-
-	Created *string `json:"created,omitempty" db:"-"`
 }
 
-type AumObject struct {
-	AumModel
-	AumEntity
-
-	Container         bool                  `json:"container"`
-	Carriable         bool                  `json:"carriable"`
-	Locations         []int64               `json:"locations,omitempty"`         // Expected array of Location IDs
-	ContainerContents []int64               `json:"containerContents,omitempty"` // Expected array of Object IDs
-	Conditionals      []AumConditional      `json:"conditionals,omitempty"`
-	CustomProperties  []AumCustomProperties `json:"customProperties,omitempty"`
-}
-
-type AumLocation struct {
+type AumZone struct {
 	AumModel
 	AumEntity
 
 	Description      string                `json:"description"`
 	Conditionals     []AumConditional      `json:"conditionals,omitempty"`
-	Objects          []int64               `json:"objects,omitempty"`
-	NPCs             []int64               `json:"npcs,omitempty"`
-	LinkedLocations  []AumLocationLink     `json:"linkedLocations,omitempty"`
+	Objects          []uint32              `json:"objects,omitempty"`
+	Actors           []uint32              `json:"actors,omitempty"`
+	LinkedZones      []AumZoneLink         `json:"linkedZones,omitempty"`
 	CustomProperties []AumCustomProperties `json:"customProperties,omitempty"`
-
-	Created *string `json:"created,omitempty" db:"-"`
 }
 
-type AumLocationLink struct {
+type AumZoneLink struct {
 	AumModel
 
-	LocationFrom int64
-	LocationTo   int64
+	ZoneFrom     uint32
+	ZoneTo       uint32
 	Conditionals []AumConditional
 }
 
@@ -82,8 +68,6 @@ type AumNote struct {
 	AumModel
 	AumEntity
 	Text string `json:"text"`
-
-	Created *string `json:"created,omitempty" db:"-"`
 }
 
 type AumConditional struct {
@@ -101,7 +85,7 @@ type AumComparison struct {
 }
 
 // AumLogic specifies ducktyped logical operators
-type AumLogic uint64
+type AumLogic uint32
 
 const (
 	// AumAND is Logical AND
