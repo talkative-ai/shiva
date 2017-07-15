@@ -1,0 +1,15 @@
+version: "3"
+
+services:
+  shiva-dev:
+    image: aum-shiva-dev
+    build:
+      dockerfile: Dockerfile-dev
+      context: .
+    volumes:
+      - $GOPATH:/go:ro
+      - .:/go/src/github.com/artificial-universe-maker/shiva:ro
+    ports:
+      - "8000:8080"
+  postgres:
+    image: postgres
