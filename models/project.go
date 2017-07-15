@@ -1,51 +1,65 @@
 package models
 
+import (
+	"time"
+)
+
 type AumID int64
 
+type AumModel struct {
+	ID        *uint64   `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type AumEntity struct {
+	Title   string  `json:"title"`
+	Created *string `json:"created,omitempty" db:"-"`
+}
+
 type AumProject struct {
-	ID            int64  `json:"id" datastore:"-"`
-	Title         string `json:"title"`
+	AumModel
 	OwnerID       string `json:"-"`
 	StartLocation int64  `json:"startLocation,omitempty"` // Expected Location ID
 
-	NPCs      []AumNPC      `json:"npcs,omitempty" datastore:"-"`
-	Objects   []AumObject   `json:"objects,omitempty" datastore:"-"`
-	Locations []AumLocation `json:"locations,omitempty" datastore:"-"`
-	Notes     []AumNote     `json:"notes,omitempty" datastore:"-"`
+	NPCs      []AumNPC      `json:"npcs,omitempty" db:"-"`
+	Objects   []AumObject   `json:"objects,omitempty" db:"-"`
+	Locations []AumLocation `json:"locations,omitempty" db:"-"`
+	Notes     []AumNote     `json:"notes,omitempty" db:"-"`
 }
 
 type AumDialogue struct {
-	ID     *int64 `json:"id"`
-	Title  string `json:"title"`
+	AumModel
+	AumEntity
 	Dialog string `json:"dialog"`
 }
 
 type AumNPC struct {
-	ID    *int64 `json:"id" datastore:"-"`
-	Title string `json:"title"`
+	AumModel
+	AumEntity
+
 	// TODO: Define a conversational dialog structure
 	Conditionals     []AumConditional      `json:"conditionals,omitempty"`
 	CustomProperties []AumCustomProperties `json:"customProperties,omitempty"`
 
-	Created *string `json:"created,omitempty" datastore:"-"`
+	Created *string `json:"created,omitempty" db:"-"`
 }
 
 type AumObject struct {
-	ID                *int64                `json:"id" datastore:"-"`
-	Title             string                `json:"title"`
+	AumModel
+	AumEntity
+
 	Container         bool                  `json:"container"`
 	Carriable         bool                  `json:"carriable"`
 	Locations         []int64               `json:"locations,omitempty"`         // Expected array of Location IDs
 	ContainerContents []int64               `json:"containerContents,omitempty"` // Expected array of Object IDs
 	Conditionals      []AumConditional      `json:"conditionals,omitempty"`
 	CustomProperties  []AumCustomProperties `json:"customProperties,omitempty"`
-
-	Created *string `json:"created,omitempty" datastore:"-"`
 }
 
 type AumLocation struct {
-	ID               *int64                `json:"id" datastore:"-"`
-	Title            string                `json:"title"`
+	AumModel
+	AumEntity
+
 	Description      string                `json:"description"`
 	Conditionals     []AumConditional      `json:"conditionals,omitempty"`
 	Objects          []int64               `json:"objects,omitempty"`
@@ -53,29 +67,34 @@ type AumLocation struct {
 	LinkedLocations  []AumLocationLink     `json:"linkedLocations,omitempty"`
 	CustomProperties []AumCustomProperties `json:"customProperties,omitempty"`
 
-	Created *string `json:"created,omitempty" datastore:"-"`
+	Created *string `json:"created,omitempty" db:"-"`
 }
 
 type AumLocationLink struct {
+	AumModel
+
 	LocationFrom int64
 	LocationTo   int64
 	Conditionals []AumConditional
 }
 
 type AumNote struct {
-	ID    *int64 `json:"id" datastore:"-"`
-	Title string `json:"title"`
-	Text  string `json:"text"`
+	AumModel
+	AumEntity
+	Text string `json:"text"`
 
-	Created *string `json:"created,omitempty" datastore:"-"`
+	Created *string `json:"created,omitempty" db:"-"`
 }
 
 type AumConditional struct {
+	AumModel
+
 	LogicalBlock   []AumComparison
 	OverrideStruct interface{}
 }
 
 type AumComparison struct {
+	AumModel
 	Value1         interface{}
 	Value2         interface{}
 	LogicOperation AumLogic

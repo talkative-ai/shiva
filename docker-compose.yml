@@ -10,6 +10,14 @@ services:
       - $GOPATH:/go:ro
       - .:/go/src/github.com/artificial-universe-maker/shiva:ro
     ports:
-      - "8000:8080"
+      - 8000:8080
   postgres:
     image: postgres
+  adminer:
+      image: adminer
+      ports:
+          - 8001:8080
+  redis:
+    image: redis
+    ports:
+      - 6397:6397

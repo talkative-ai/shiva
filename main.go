@@ -1,14 +1,16 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
-	"github.com/rs/cors"
 	mux "github.com/artificial-universe-maker/muxlite"
+	"github.com/artificial-universe-maker/shiva/db"
 	"github.com/artificial-universe-maker/shiva/prehandle"
 	"github.com/artificial-universe-maker/shiva/router"
 	"github.com/artificial-universe-maker/shiva/routes"
+	"github.com/rs/cors"
 
 	"google.golang.org/appengine"
 )
@@ -18,6 +20,12 @@ func doRoute(r *mux.Router, route *router.Route) {
 }
 
 func main() {
+
+	err := db.InitializeDB()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	r := mux.NewRouter()
 	doRoute(r, routes.GetIndex)

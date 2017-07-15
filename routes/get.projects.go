@@ -2,10 +2,7 @@ package routes
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
-
-	"cloud.google.com/go/datastore"
 
 	"github.com/artificial-universe-maker/shiva/models"
 	"github.com/artificial-universe-maker/shiva/myerrors"
@@ -34,30 +31,4 @@ func getProjectsHandler(w http.ResponseWriter, r *http.Request) {
 		myerrors.ServerError(w, r, err)
 		return
 	}
-
-	dsClient, err := datastore.NewClient(r.Context(), "artificial-universe-maker")
-	if err != nil {
-		myerrors.ServerError(w, r, err)
-		return
-	}
-
-	projects := make([]models.AumProject, 0)
-
-	keys, err := dsClient.GetAll(r.Context(), datastore.NewQuery("Project").Filter("OwnerID =", user.Sub), &projects)
-	if err != nil {
-		myerrors.ServerError(w, r, err)
-		return
-	}
-
-	for id := range projects {
-		projects[id].ID = keys[id].ID
-	}
-
-	resp, err := json.Marshal(projects)
-	if err != nil {
-		myerrors.ServerError(w, r, err)
-		return
-	}
-
-	fmt.Fprintln(w, string(resp))
 }
