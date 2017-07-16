@@ -1,24 +1,25 @@
 package models
 
 import (
+	"database/sql"
 	"time"
 )
 
 type AumModel struct {
-	ID        *uint32    `json:"id"`
-	CreatedAt *time.Time `json:"created_at"`
+	ID        *uint64    `json:"id" db:"id, primarykey, autoincrement"`
+	CreatedAt *time.Time `json:"created_at" db:"created_at"`
 }
 
 type AumEntity struct {
-	Title   string  `json:"title"`
+	Title   string  `json:"title" db:"title"`
 	Created *string `json:"created_at,omitempty" db:"-"`
 }
 
 type AumProject struct {
 	AumModel
 	AumEntity
-	OwnerID   string `json:"-"`
-	StartZone uint32 `json:"startZone,omitempty"` // Expected Zone ID
+	OwnerID   string        `json:"-" db:"owner_id"`
+	StartZone sql.NullInt64 `json:"startZone,omitempty" db:"start_zone_id"` // Expected Zone ID
 
 	Actors []AumActor `json:"actors,omitempty" db:"-"`
 	Zones  []AumZone  `json:"locations,omitempty" db:"-"`
@@ -37,7 +38,7 @@ type AumActor struct {
 
 	Container         bool     `json:"container"`
 	Carriable         bool     `json:"carriable"`
-	ContainerContents []uint32 `json:"containerContents,omitempty"` // Expected array of Object IDs
+	ContainerContents []uint64 `json:"containerContents,omitempty"` // Expected array of Object IDs
 
 	// TODO: Define a conversational dialog structure
 	Conditionals     []AumConditional      `json:"conditionals,omitempty"`
@@ -50,8 +51,8 @@ type AumZone struct {
 
 	Description      string                `json:"description"`
 	Conditionals     []AumConditional      `json:"conditionals,omitempty"`
-	Objects          []uint32              `json:"objects,omitempty"`
-	Actors           []uint32              `json:"actors,omitempty"`
+	Objects          []uint64              `json:"objects,omitempty"`
+	Actors           []uint64              `json:"actors,omitempty"`
 	LinkedZones      []AumZoneLink         `json:"linkedZones,omitempty"`
 	CustomProperties []AumCustomProperties `json:"customProperties,omitempty"`
 }
@@ -59,8 +60,8 @@ type AumZone struct {
 type AumZoneLink struct {
 	AumModel
 
-	ZoneFrom     uint32
-	ZoneTo       uint32
+	ZoneFrom     uint64
+	ZoneTo       uint64
 	Conditionals []AumConditional
 }
 
@@ -85,7 +86,7 @@ type AumComparison struct {
 }
 
 // AumLogic specifies ducktyped logical operators
-type AumLogic uint32
+type AumLogic uint64
 
 const (
 	// AumAND is Logical AND

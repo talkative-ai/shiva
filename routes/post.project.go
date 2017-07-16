@@ -28,22 +28,28 @@ var PostProject = &router.Route{
 func postProjectHandler(w http.ResponseWriter, r *http.Request) {
 
 	project := new(models.AumProject)
+	//user := new(models.User)
+
+	// err := json.Unmarshal([]byte(r.Header.Get("X-Body")), user)
+	// if err != nil {
+	// 	myerrors.ServerError(w, r, err)
+	// 	return
+	// }
+
+	// fmt.Println("Here we are", r.Header.Get("X-Body"))
 
 	err := json.Unmarshal([]byte(r.Header.Get("X-Body")), project)
 	if err != nil {
 		myerrors.ServerError(w, r, err)
 		return
 	}
-	_, err = db.ShivaDB.NamedExec("INSERT INTO projects (title) VALUES (:title)", project)
+
+	// project.OwnerID = user.Sub
+
+	err = db.DBMap.Insert(project)
 	if err != nil {
 		fmt.Println(err)
 	}
-
-	// err = json.Unmarshal([]byte(r.Header.Get("X-User")), user)
-	// if err != nil {
-	// 	myerrors.ServerError(w, r, err)
-	// 	return
-	// }
 
 	return
 }
