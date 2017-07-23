@@ -21,7 +21,7 @@ func InitializeDB() error {
 
 	DBMap = &gorp.DbMap{Db: Shiva.DB, Dialect: gorp.PostgresDialect{}}
 
-	DBMap.AddTableWithName(models.AumProject{}, "projects").SetKeys(true, "ID")
+	DBMap.AddTableWithName(models.AumProject{}, "projects")
 	DBMap.AddTableWithName(models.AumZone{}, "zones")
 	DBMap.AddTableWithName(models.AumActor{}, "actors")
 	DBMap.AddTableWithName(models.AumDialog{}, "dialogs")
