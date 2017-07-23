@@ -2,9 +2,20 @@ package utilities
 
 import (
 	"encoding/binary"
+	"fmt"
 
 	"github.com/artificial-universe-maker/shiva/models"
 )
+
+type lConditionaIndex struct {
+	Conditional models.LConditional
+	Index       int
+}
+
+type bSliceIndex struct {
+	Bslice []byte
+	Index  int
+}
 
 func compileHelper(o *models.OpArray) []byte {
 	compiled := []byte{}
@@ -69,6 +80,55 @@ func compileStatementArray(c *[]*models.LStatement) []byte {
 	return compiled
 }
 
+func conditionalCompile(cidx *lConditionaIndex, c chan bSliceIndex) {
+	bslice := []byte{}
+
+	var expectedEnum models.StatementInt
+
+	if cidx.Conditional.StatementIF != nil {
+		expectedEnum |= models.StatementIF
+	}
+	if cidx.Conditional.StatementELIF != nil {
+		expectedEnum |= models.StatementELIF
+	}
+	if cidx.Conditional.StatementELSE != nil {
+		expectedEnum |= models.StatementELSE
+	}
+
+	bslice = append(bslice, uint8(expectedEnum))
+
+	if expectedEnum&models.StatementIF > 0 {
+		bslice = append(bslice, uint8(len(*cidx.Conditional.StatementIF.Operators)))
+	}
+	if expectedEnum&models.StatementELIF > 0 {
+		bslice = append(bslice, uint8(len(*cidx.Conditional.StatementELIF)))
+		for _, elif := range *cidx.Conditional.StatementELIF {
+			bslice = append(bslice, uint8(len(*elif.Operators)))
+		}
+	}
+	if expectedEnum&models.StatementELSE > 0 {
+		if cidx.Conditional.StatementELSE.Operators != nil {
+			bslice = append(bslice, uint8(len(*cidx.Conditional.StatementELSE.Operators)))
+		} else {
+			bslice = append(bslice, 0)
+		}
+	}
+
+	bslice = append(bslice, compileStatement(cidx.Conditional.StatementIF)...)
+	bslice = append(bslice, compileStatementArray(cidx.Conditional.StatementELIF)...)
+	bslice = append(bslice, compileStatement(cidx.Conditional.StatementELSE)...)
+
+	b := make([]byte, 4)
+	binary.LittleEndian.PutUint32(b, uint32(len(bslice)))
+	bslice = append(bslice, b...)
+
+	bsliceidx := bSliceIndex{
+		Bslice: bslice,
+		Index:  cidx.Index,
+	}
+	c <- bsliceidx
+}
+
 func Compile(logic *models.LBlock) []byte {
 	compiled := []byte{}
 
@@ -81,48 +141,27 @@ func Compile(logic *models.LBlock) []byte {
 
 	compiled = append(compiled, uint8(len(logic.Conditionals)))
 
-	for _, conditional := range logic.Conditionals {
+	c := make(chan bSliceIndex)
+	for idx, conditional := range logic.Conditionals {
+		go conditionalCompile(&lConditionaIndex{
+			Conditional: conditional,
+			Index:       idx,
+		}, c)
+	}
 
-		bslice := []byte{}
+	newBytes := make([][]byte, len(logic.Conditionals))
 
-		var expectedEnum models.StatementInt
-
-		if conditional.StatementIF != nil {
-			expectedEnum |= models.StatementIF
+	reg := 0
+	for bslice := range c {
+		fmt.Println("Channel", bslice.Index)
+		newBytes[bslice.Index] = bslice.Bslice
+		reg++
+		if reg == len(logic.Conditionals) {
+			close(c)
 		}
-		if conditional.StatementELIF != nil {
-			expectedEnum |= models.StatementELIF
-		}
-		if conditional.StatementELSE != nil {
-			expectedEnum |= models.StatementELSE
-		}
+	}
 
-		bslice = append(bslice, uint8(expectedEnum))
-
-		if expectedEnum&models.StatementIF > 0 {
-			bslice = append(bslice, uint8(len(*conditional.StatementIF.Operators)))
-		}
-		if expectedEnum&models.StatementELIF > 0 {
-			bslice = append(bslice, uint8(len(*conditional.StatementELIF)))
-			for _, elif := range *conditional.StatementELIF {
-				bslice = append(bslice, uint8(len(*elif.Operators)))
-			}
-		}
-		if expectedEnum&models.StatementELSE > 0 {
-			if conditional.StatementELSE.Operators != nil {
-				bslice = append(bslice, uint8(len(*conditional.StatementELSE.Operators)))
-			} else {
-				bslice = append(bslice, 0)
-			}
-		}
-
-		bslice = append(bslice, compileStatement(conditional.StatementIF)...)
-		bslice = append(bslice, compileStatementArray(conditional.StatementELIF)...)
-		bslice = append(bslice, compileStatement(conditional.StatementELSE)...)
-
-		b := make([]byte, 4)
-		binary.LittleEndian.PutUint32(b, uint32(len(bslice)))
-		compiled = append(compiled, b...)
+	for _, bslice := range newBytes {
 		compiled = append(compiled, bslice...)
 	}
 
