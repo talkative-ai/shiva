@@ -1,14 +1,8 @@
 package models
 
 type LBlock struct {
-	AlwaysExec   *uint64        `json:"always"`
-	Conditionals []LConditional `json:"conditionals"`
-}
-
-type LConditional struct {
-	StatementIF   *LStatement    `json:"if"`
-	StatementELIF *[]*LStatement `json:"elif"`
-	StatementELSE *LStatement    `json:"else"`
+	AlwaysExec *uint64         `json:"always"`
+	Statements *[][]LStatement `json:"statements"`
 }
 
 type LStatement struct {
