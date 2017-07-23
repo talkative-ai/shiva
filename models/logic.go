@@ -1,19 +1,19 @@
 package models
 
 type LBlock struct {
-	AlwaysExec   []int64        `json:"always"`
+	AlwaysExec   *uint64        `json:"always"`
 	Conditionals []LConditional `json:"conditionals"`
 }
 
 type LConditional struct {
-	StatementIF   *LStatement   `json:"if"`
-	StatementELIF *[]LStatement `json:"elif"`
-	StatementELSE *LStatement   `json:"else"`
+	StatementIF   *LStatement    `json:"if"`
+	StatementELIF *[]*LStatement `json:"elif"`
+	StatementELSE *LStatement    `json:"else"`
 }
 
 type LStatement struct {
 	Operators *OpArray `json:"conditions"`
-	Exec      []int64  `json:"then"`
+	Exec      []uint64 `json:"then"`
 }
 
 type VarValMap map[int]interface{}

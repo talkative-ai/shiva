@@ -58,13 +58,13 @@ func compileStatement(c *models.LStatement) []byte {
 	return compiled
 }
 
-func compileStatementArray(c *[]models.LStatement) []byte {
+func compileStatementArray(c *[]*models.LStatement) []byte {
 	compiled := []byte{}
 
 	compiled = append(compiled, uint8(len(*c)))
 
 	for _, stmt := range *c {
-		compiled = append(compiled, compileStatement(&stmt)...)
+		compiled = append(compiled, compileStatement(stmt)...)
 	}
 	return compiled
 }
@@ -72,17 +72,19 @@ func compileStatementArray(c *[]models.LStatement) []byte {
 func Compile(logic *models.LBlock) []byte {
 	compiled := []byte{}
 
-	compiled = append(compiled, uint8(len(logic.AlwaysExec)))
-
-	for _, id := range logic.AlwaysExec {
+	if logic.AlwaysExec != nil {
+		compiled = append(compiled, 1)
 		b := make([]byte, 8)
-		binary.LittleEndian.PutUint64(b, uint64(id))
+		binary.LittleEndian.PutUint64(b, *logic.AlwaysExec)
 		compiled = append(compiled, b...)
 	}
 
 	compiled = append(compiled, uint8(len(logic.Conditionals)))
 
 	for _, conditional := range logic.Conditionals {
+
+		bslice := []byte{}
+
 		var expectedEnum models.StatementInt
 
 		if conditional.StatementIF != nil {
@@ -95,28 +97,33 @@ func Compile(logic *models.LBlock) []byte {
 			expectedEnum |= models.StatementELSE
 		}
 
-		compiled = append(compiled, uint8(expectedEnum))
+		bslice = append(bslice, uint8(expectedEnum))
 
 		if expectedEnum&models.StatementIF > 0 {
-			compiled = append(compiled, uint8(len(*conditional.StatementIF.Operators)))
+			bslice = append(bslice, uint8(len(*conditional.StatementIF.Operators)))
 		}
 		if expectedEnum&models.StatementELIF > 0 {
-			compiled = append(compiled, uint8(len(*conditional.StatementELIF)))
+			bslice = append(bslice, uint8(len(*conditional.StatementELIF)))
 			for _, elif := range *conditional.StatementELIF {
-				compiled = append(compiled, uint8(len(*elif.Operators)))
+				bslice = append(bslice, uint8(len(*elif.Operators)))
 			}
 		}
 		if expectedEnum&models.StatementELSE > 0 {
 			if conditional.StatementELSE.Operators != nil {
-				compiled = append(compiled, uint8(len(*conditional.StatementELSE.Operators)))
+				bslice = append(bslice, uint8(len(*conditional.StatementELSE.Operators)))
 			} else {
-				compiled = append(compiled, 0)
+				bslice = append(bslice, 0)
 			}
 		}
 
-		compiled = append(compiled, compileStatement(conditional.StatementIF)...)
-		compiled = append(compiled, compileStatementArray(conditional.StatementELIF)...)
-		compiled = append(compiled, compileStatement(conditional.StatementELSE)...)
+		bslice = append(bslice, compileStatement(conditional.StatementIF)...)
+		bslice = append(bslice, compileStatementArray(conditional.StatementELIF)...)
+		bslice = append(bslice, compileStatement(conditional.StatementELSE)...)
+
+		b := make([]byte, 4)
+		binary.LittleEndian.PutUint32(b, uint32(len(bslice)))
+		compiled = append(compiled, b...)
+		compiled = append(compiled, bslice...)
 	}
 
 	return compiled
