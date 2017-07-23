@@ -35,7 +35,7 @@ func TestCompile(t *testing.T) {
 						"654": "hello"
 					},
 					"lte": {
-						"789": 100
+						"1231": 100
 					}
 				}],
 				"then": [

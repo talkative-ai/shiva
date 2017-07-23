@@ -1,6 +1,8 @@
 package utilities
 
 import (
+	"encoding/binary"
+
 	"github.com/artificial-universe-maker/shiva/models"
 )
 
@@ -16,16 +18,23 @@ func compileHelper(o *models.OpArray) []byte {
 		compiled = append(compiled, byte(availableConditionals))
 		for _, group := range OrGroup {
 			for vr, val := range group {
-				compiled = append(compiled, byte(vr))
+				b := make([]byte, 8)
+				binary.LittleEndian.PutUint64(b, uint64(vr))
+				compiled = append(compiled, b...)
 				switch v := val.(type) {
 				case string:
 					compiled = append(compiled, uint8(0))
-					compiled = append(compiled, byte(uint16(len(v))))
+					b := make([]byte, 2)
+					binary.LittleEndian.PutUint16(b, uint16(len(v)))
+					compiled = append(compiled, b...)
 					compiled = append(compiled, []byte(v)...)
 					break
 				case int:
 					compiled = append(compiled, uint8(1))
-					compiled = append(compiled, byte(uint32(v)))
+					b := make([]byte, 4)
+					binary.LittleEndian.PutUint32(b, uint32(v))
+					compiled = append(compiled, b...)
+					break
 				}
 			}
 		}
@@ -40,9 +49,11 @@ func compileStatement(c *models.LStatement) []byte {
 	if c.Operators != nil {
 		compiled = append(compiled, compileHelper(c.Operators)...)
 	}
-	compiled = append(compiled, uint8(len(c.Exec)))
+	compiled = append(compiled, byte(len(c.Exec)))
 	for _, execID := range c.Exec {
-		compiled = append(compiled, byte(execID))
+		b := make([]byte, 4)
+		binary.LittleEndian.PutUint32(b, uint32(execID))
+		compiled = append(compiled, b...)
 	}
 	return compiled
 }
@@ -50,7 +61,7 @@ func compileStatement(c *models.LStatement) []byte {
 func compileStatementArray(c *[]models.LStatement) []byte {
 	compiled := []byte{}
 
-	compiled = append(compiled, byte(len(*c)))
+	compiled = append(compiled, uint8(len(*c)))
 
 	for _, stmt := range *c {
 		compiled = append(compiled, compileStatement(&stmt)...)
@@ -64,7 +75,9 @@ func Compile(logic *models.LBlock) []byte {
 	compiled = append(compiled, uint8(len(logic.AlwaysExec)))
 
 	for _, id := range logic.AlwaysExec {
-		compiled = append(compiled, byte(id))
+		b := make([]byte, 8)
+		binary.LittleEndian.PutUint64(b, uint64(id))
+		compiled = append(compiled, b...)
 	}
 
 	compiled = append(compiled, uint8(len(logic.Conditionals)))
