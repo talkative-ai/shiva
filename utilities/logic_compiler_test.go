@@ -2,6 +2,7 @@ package utilities
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/artificial-universe-maker/shiva/models"
@@ -50,5 +51,7 @@ func TestCompile(t *testing.T) {
 	}`
 	block := &models.LBlock{}
 	json.Unmarshal([]byte(logicRaw), block)
-	Compile(block)
+	compiled := Compile(block)
+
+	fmt.Println(compiled)
 }

@@ -1,8 +1,6 @@
 package utilities
 
 import (
-	"fmt"
-
 	"github.com/artificial-universe-maker/shiva/models"
 )
 
@@ -21,13 +19,13 @@ func compileHelper(o *models.OpArray) []byte {
 				compiled = append(compiled, byte(vr))
 				switch v := val.(type) {
 				case string:
-					compiled = append(compiled, byte(0))
-					compiled = append(compiled, byte(len(v)))
+					compiled = append(compiled, uint8(0))
+					compiled = append(compiled, byte(uint16(len(v))))
 					compiled = append(compiled, []byte(v)...)
 					break
 				case int:
-					compiled = append(compiled, byte(1))
-					compiled = append(compiled, byte(v))
+					compiled = append(compiled, uint8(1))
+					compiled = append(compiled, byte(uint32(v)))
 				}
 			}
 		}
@@ -42,7 +40,7 @@ func compileStatement(c *models.LStatement) []byte {
 	if c.Operators != nil {
 		compiled = append(compiled, compileHelper(c.Operators)...)
 	}
-	compiled = append(compiled, byte(len(c.Exec)))
+	compiled = append(compiled, uint8(len(c.Exec)))
 	for _, execID := range c.Exec {
 		compiled = append(compiled, byte(execID))
 	}
@@ -55,13 +53,7 @@ func compileStatementArray(c *[]models.LStatement) []byte {
 	compiled = append(compiled, byte(len(*c)))
 
 	for _, stmt := range *c {
-		if stmt.Operators != nil {
-			compiled = append(compiled, compileHelper(stmt.Operators)...)
-		}
-		compiled = append(compiled, byte(len(stmt.Exec)))
-		for _, execID := range stmt.Exec {
-			compiled = append(compiled, byte(execID))
-		}
+		compiled = append(compiled, compileStatement(&stmt)...)
 	}
 	return compiled
 }
@@ -90,20 +82,20 @@ func Compile(logic *models.LBlock) []byte {
 			expectedEnum |= models.StatementELSE
 		}
 
-		compiled = append(compiled, byte(expectedEnum))
+		compiled = append(compiled, uint8(expectedEnum))
 
 		if expectedEnum&models.StatementIF > 0 {
-			compiled = append(compiled, byte(len(*conditional.StatementIF.Operators)))
+			compiled = append(compiled, uint8(len(*conditional.StatementIF.Operators)))
 		}
 		if expectedEnum&models.StatementELIF > 0 {
-			compiled = append(compiled, byte(len(*conditional.StatementELIF)))
+			compiled = append(compiled, uint8(len(*conditional.StatementELIF)))
 			for _, elif := range *conditional.StatementELIF {
-				compiled = append(compiled, byte(len(*elif.Operators)))
+				compiled = append(compiled, uint8(len(*elif.Operators)))
 			}
 		}
 		if expectedEnum&models.StatementELSE > 0 {
 			if conditional.StatementELSE.Operators != nil {
-				compiled = append(compiled, byte(len(*conditional.StatementELSE.Operators)))
+				compiled = append(compiled, uint8(len(*conditional.StatementELSE.Operators)))
 			} else {
 				compiled = append(compiled, 0)
 			}
@@ -113,8 +105,6 @@ func Compile(logic *models.LBlock) []byte {
 		compiled = append(compiled, compileStatementArray(conditional.StatementELIF)...)
 		compiled = append(compiled, compileStatement(conditional.StatementELSE)...)
 	}
-
-	fmt.Println(compiled)
 
 	return compiled
 }
