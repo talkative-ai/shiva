@@ -108,10 +108,17 @@ func compileStatements(cidx *lStatementsIndex, c chan bSliceIndex) {
 
 	b := make([]byte, 4)
 	binary.LittleEndian.PutUint32(b, uint32(len(bslice)))
-	bslice = append(bslice, b...)
+
+	finished := []byte{}
+	// Overall length of the statement byte array
+	// Useful for jumping through statements
+	finished = append(finished, b...)
+
+	// Compiled statements
+	finished = append(finished, bslice...)
 
 	bsliceidx := bSliceIndex{
-		Bslice: bslice,
+		Bslice: finished,
 		Index:  cidx.Index,
 	}
 	c <- bsliceidx
@@ -125,6 +132,8 @@ func Compile(logic *models.LBlock) []byte {
 		b := make([]byte, 8)
 		binary.LittleEndian.PutUint64(b, *logic.AlwaysExec)
 		compiled = append(compiled, b...)
+	} else {
+		compiled = append(compiled, 0)
 	}
 
 	compiled = append(compiled, uint8(len(*logic.Statements)))
