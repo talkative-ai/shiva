@@ -10,7 +10,7 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/artificial-universe-maker/GoogleIdTokenVerifier"
-	"github.com/artificial-universe-maker/shiva/models"
+	"github.com/artificial-universe-maker/go-utilities/models"
 	"github.com/artificial-universe-maker/shiva/myerrors"
 	"github.com/artificial-universe-maker/shiva/router"
 

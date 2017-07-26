@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/artificial-universe-maker/shiva/db"
-	"github.com/artificial-universe-maker/shiva/models"
+	"github.com/artificial-universe-maker/go-utilities/db"
+	"github.com/artificial-universe-maker/go-utilities/models"
 	"github.com/artificial-universe-maker/shiva/myerrors"
 	"github.com/artificial-universe-maker/shiva/router"
 

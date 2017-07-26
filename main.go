@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	mux "github.com/artificial-universe-maker/muxlite"
-	"github.com/artificial-universe-maker/shiva/db"
+	"github.com/artificial-universe-maker/go-utilities/db"
 	"github.com/artificial-universe-maker/shiva/prehandle"
 	"github.com/artificial-universe-maker/shiva/router"
 	"github.com/artificial-universe-maker/shiva/routes"
