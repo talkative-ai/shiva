@@ -10,9 +10,9 @@ import (
 
 	"encoding/base64"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/artificial-universe-maker/go-utilities"
 	"github.com/artificial-universe-maker/shiva/myerrors"
-	"github.com/artificial-universe-maker/shiva/utilities"
+	jwt "github.com/dgrijalva/jwt-go"
 )
 
 // Prehandler type is exactly the same as http.HandlerFunc except that a return bool is expected to indicate success/failure
