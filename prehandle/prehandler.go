@@ -11,7 +11,7 @@ import (
 	"encoding/base64"
 
 	"github.com/artificial-universe-maker/go-utilities"
-	"github.com/artificial-universe-maker/shiva/myerrors"
+	"github.com/artificial-universe-maker/go-utilities/myerrors"
 	jwt "github.com/dgrijalva/jwt-go"
 )
 

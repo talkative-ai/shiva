@@ -8,7 +8,7 @@ import (
 	"cloud.google.com/go/datastore"
 
 	"github.com/artificial-universe-maker/go-utilities/models"
-	"github.com/artificial-universe-maker/shiva/myerrors"
+	"github.com/artificial-universe-maker/go-utilities/myerrors"
 	"github.com/artificial-universe-maker/shiva/prehandle"
 	"github.com/artificial-universe-maker/shiva/router"
 

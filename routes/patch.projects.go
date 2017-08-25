@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/artificial-universe-maker/go-utilities/models"
-	"github.com/artificial-universe-maker/shiva/myerrors"
+	"github.com/artificial-universe-maker/go-utilities/myerrors"
 	"github.com/artificial-universe-maker/shiva/router"
 
 	"github.com/artificial-universe-maker/shiva/prehandle"
