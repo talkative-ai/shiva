@@ -8,11 +8,11 @@ import (
 
 	"cloud.google.com/go/datastore"
 
-	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/artificial-universe-maker/GoogleIdTokenVerifier"
 	"github.com/artificial-universe-maker/go-utilities/models"
 	"github.com/artificial-universe-maker/go-utilities/myerrors"
 	"github.com/artificial-universe-maker/shiva/router"
+	jwt "github.com/dgrijalva/jwt-go"
 
 	"time"
 
@@ -82,10 +82,9 @@ func postTokenValidateHandler(w http.ResponseWriter, r *http.Request) {
 	k := datastore.NameKey("User", info.Sub, nil)
 
 	u := &models.User{
-		Sub:     info.Sub,
-		Email:   info.Email,
-		Name:    info.Name,
-		Picture: info.Picture,
+		Email: info.Email,
+		Name:  info.Name,
+		Image: info.Picture,
 	}
 
 	if _, err := dsClient.Put(ctx, k, u); err != nil {

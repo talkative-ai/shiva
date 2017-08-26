@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	mux "github.com/artificial-universe-maker/muxlite"
 	"github.com/artificial-universe-maker/go-utilities/db"
+	mux "github.com/artificial-universe-maker/muxlite"
 	"github.com/artificial-universe-maker/shiva/prehandle"
 	"github.com/artificial-universe-maker/shiva/router"
 	"github.com/artificial-universe-maker/shiva/routes"
@@ -32,6 +32,7 @@ func main() {
 
 	doRoute(r, routes.GetProjects)
 	doRoute(r, routes.PostProject)
+	doRoute(r, routes.PostAuthGoogle)
 	doRoute(r, routes.GetProject)
 	doRoute(r, routes.PatchProjects)
 
