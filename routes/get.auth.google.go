@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 
@@ -36,7 +37,6 @@ func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		myerrors.Respond(w, &myerrors.MySimpleError{
 			Code: http.StatusUnauthorized,
-			Log:  err.Error(),
 			Req:  r,
 		})
 		return
@@ -52,25 +52,23 @@ func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = db.InitializeDB()
+	newUser := false
 
 	// Check to see if the user exists
 	user := &models.User{}
-	_, err = db.DBMap.Select(user, "SELECT * FROM users WHERE email=$1", tokenInfo.Email)
+	err = db.DBMap.SelectOne(user, "SELECT * FROM users WHERE 'Email'=$1", tokenInfo.Email)
 	if err != nil {
-		myerrors.ServerError(w, r, err)
-		return
-	}
-
-	newUser := false
-
-	fmt.Printf("%+v", user)
-
-	// User does not exist. Create and initialize base team
-	if user.ID == 0 {
-		newUser = true
-		user.Email = tokenInfo.Email
-		err := db.CreateAndSaveUser(user)
-		if err != nil {
+		if err == sql.ErrNoRows {
+			fmt.Println("Printing the user!")
+			fmt.Printf("%+v", *user)
+			// User does not exist. Create and initialize base team
+			newUser = true
+			user.Email = tokenInfo.Email
+			if err := db.CreateAndSaveUser(user); err != nil {
+				myerrors.ServerError(w, r, err)
+				return
+			}
+		} else {
 			myerrors.ServerError(w, r, err)
 			return
 		}
