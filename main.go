@@ -28,8 +28,6 @@ func main() {
 	r := mux.NewRouter()
 	doRoute(r, routes.GetIndex)
 
-	doRoute(r, routes.PostTokenValidate)
-
 	doRoute(r, routes.GetProjects)
 	doRoute(r, routes.PostProject)
 	doRoute(r, routes.PostAuthGoogle)
