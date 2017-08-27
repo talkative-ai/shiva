@@ -2,7 +2,6 @@ package routes
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 
 	"github.com/artificial-universe-maker/go-utilities/db"
@@ -56,11 +55,9 @@ func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Check to see if the user exists
 	user := &models.User{}
-	err = db.DBMap.SelectOne(user, "SELECT * FROM users WHERE 'Email'=$1", tokenInfo.Email)
+	err = db.DBMap.SelectOne(user, "SELECT * FROM users WHERE \"Email\"=$1", tokenInfo.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			fmt.Println("Printing the user!")
-			fmt.Printf("%+v", *user)
 			// User does not exist. Create and initialize base team
 			newUser = true
 			user.Email = tokenInfo.Email
