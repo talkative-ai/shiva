@@ -2,6 +2,7 @@ package routes
 
 import (
 	"database/sql"
+	"encoding/json"
 	"net/http"
 	"regexp"
 
@@ -101,5 +102,7 @@ func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.WriteHeader(http.StatusOK)
 	}
+
+	json.NewEncoder(w).Encode(*user)
 
 }
