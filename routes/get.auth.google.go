@@ -3,14 +3,17 @@ package routes
 import (
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 	"regexp"
+	"time"
 
 	"github.com/artificial-universe-maker/go-utilities/db"
 	"github.com/artificial-universe-maker/go-utilities/models"
 	"github.com/artificial-universe-maker/go-utilities/myerrors"
 	"github.com/artificial-universe-maker/shiva/prehandle"
 	"github.com/artificial-universe-maker/shiva/router"
+	jwt "github.com/dgrijalva/jwt-go"
 	auth "google.golang.org/api/oauth2/v2"
 )
 
@@ -96,6 +99,19 @@ func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"exp": time.Now().Add(time.Minute * 60 * 24 * 30).Unix(),
+		"id":  user.ID,
+	})
+
+	tokenString, err := token.SignedString([]byte("secret"))
+	if err != nil {
+		log.Println("Error", err)
+		return
+	}
+
+	w.Header().Set("x-token", tokenString)
 
 	if newUser {
 		w.WriteHeader(http.StatusCreated)

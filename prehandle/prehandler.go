@@ -70,7 +70,7 @@ func JWT(w http.ResponseWriter, r *http.Request) bool {
 		return false
 	}
 
-	if roundD(token["Exp"].(float64)) < time.Now().Unix() {
+	if roundD(token["exp"].(float64)) < time.Now().Unix() {
 		myerrors.Respond(w, &myerrors.MySimpleError{
 			Req:     r,
 			Code:    http.StatusUnauthorized,
@@ -80,8 +80,8 @@ func JWT(w http.ResponseWriter, r *http.Request) bool {
 	}
 
 	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"Exp":  time.Now().Add(time.Minute * 6000).Unix(),
-		"User": token["User"],
+		"exp": time.Now().Add(time.Minute * 6000).Unix(),
+		"id":  token["id"],
 	})
 
 	tokenString, err := newToken.SignedString([]byte(os.Getenv("JWT_KEY")))
