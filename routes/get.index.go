@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/artificial-universe-maker/shiva/prehandle"
-	"github.com/artificial-universe-maker/shiva/router"
+	"github.com/artificial-universe-maker/go-utilities/prehandle"
+	"github.com/artificial-universe-maker/go-utilities/router"
 )
 
 // GetIndex router.Route

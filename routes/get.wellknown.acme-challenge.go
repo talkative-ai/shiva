@@ -4,9 +4,9 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/artificial-universe-maker/shiva/router"
+	"github.com/artificial-universe-maker/go-utilities/router"
 
-	"github.com/artificial-universe-maker/shiva/prehandle"
+	"github.com/artificial-universe-maker/go-utilities/prehandle"
 )
 
 // GetWellknownAcmeChallenge router.Route

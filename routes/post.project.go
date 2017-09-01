@@ -8,9 +8,8 @@ import (
 	"github.com/artificial-universe-maker/go-utilities/db"
 	"github.com/artificial-universe-maker/go-utilities/models"
 	"github.com/artificial-universe-maker/go-utilities/myerrors"
-	"github.com/artificial-universe-maker/shiva/router"
-
-	"github.com/artificial-universe-maker/shiva/prehandle"
+	"github.com/artificial-universe-maker/go-utilities/prehandle"
+	"github.com/artificial-universe-maker/go-utilities/router"
 )
 
 // PostProject router.Route

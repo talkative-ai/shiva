@@ -6,9 +6,9 @@ import (
 
 	"github.com/artificial-universe-maker/go-utilities/models"
 	"github.com/artificial-universe-maker/go-utilities/myerrors"
-	"github.com/artificial-universe-maker/shiva/router"
+	"github.com/artificial-universe-maker/go-utilities/router"
 
-	"github.com/artificial-universe-maker/shiva/prehandle"
+	"github.com/artificial-universe-maker/go-utilities/prehandle"
 )
 
 // PatchProject router.Route

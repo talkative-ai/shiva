@@ -7,8 +7,8 @@ import (
 
 	"github.com/artificial-universe-maker/go-utilities/db"
 	mux "github.com/artificial-universe-maker/muxlite"
-	"github.com/artificial-universe-maker/shiva/prehandle"
-	"github.com/artificial-universe-maker/shiva/router"
+	"github.com/artificial-universe-maker/go-utilities/prehandle"
+	"github.com/artificial-universe-maker/go-utilities/router"
 	"github.com/artificial-universe-maker/shiva/routes"
 	"github.com/rs/cors"
 )
