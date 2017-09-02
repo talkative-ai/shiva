@@ -6,10 +6,10 @@ import (
 	"net/http"
 
 	"github.com/artificial-universe-maker/go-utilities/db"
-	mux "github.com/artificial-universe-maker/muxlite"
 	"github.com/artificial-universe-maker/go-utilities/prehandle"
 	"github.com/artificial-universe-maker/go-utilities/router"
 	"github.com/artificial-universe-maker/shiva/routes"
+	mux "github.com/gorilla/mux"
 	"github.com/rs/cors"
 )
 

@@ -1,17 +1,18 @@
 package routes
 
 import (
-	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
+	utilities "github.com/artificial-universe-maker/go-utilities"
 	"github.com/artificial-universe-maker/go-utilities/db"
 	"github.com/artificial-universe-maker/go-utilities/models"
 	"github.com/artificial-universe-maker/go-utilities/myerrors"
 	"github.com/artificial-universe-maker/go-utilities/prehandle"
 	"github.com/artificial-universe-maker/go-utilities/router"
 
-	mux "github.com/artificial-universe-maker/muxlite"
+	"github.com/gorilla/mux"
 )
 
 // GetProject router.Route
@@ -42,19 +43,36 @@ func getProjectHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Validate project access
 	project := &models.AumProject{}
-	err = db.DBMap.SelectOne(project, "SELECT * FROM workbench_projects WHERE id=$1", id)
+	err = db.DBMap.SelectOne(project, `SELECT * FROM workbench_projects WHERE "ID"=$1`, id)
 	if err != nil {
+		log.Printf("Project %+v params %+v", *project, urlparams)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
+	token, err := utilities.ParseJTWClaims(w.Header().Get("x-token"))
+	tknData := token["data"].(map[string]interface{})
+	log.Println(tknData)
+
 	member := &models.TeamMember{}
-	err = db.DBMap.SelectOne(member, `SELECT t."Role" FROM workbench_projects AS p JOIN team_members AS t ON t."TeamID"=p."TeamID" AND t."UserID"=1 WHERE p."ID"=1`)
-	if member.TeamID != 1 || err != nil {
+	err = db.DBMap.SelectOne(member, `
+		SELECT t."Role"
+		FROM workbench_projects AS p
+		JOIN team_members AS t
+		ON t."TeamID"=p."TeamID" AND t."UserID"=$1
+		WHERE p."ID"=$1
+	`, tknData["user_id"], id)
+	if member.Role != 1 || err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
 	// Return project data
-	json.NewEncoder(w).Encode(project)
+	out, err := project.MarshalJSON()
+	if err != nil {
+		myerrors.ServerError(w, r, err)
+		return
+	}
+
+	w.Write(out)
 }

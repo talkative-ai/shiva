@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"time"
 
@@ -102,10 +103,12 @@ func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"exp": time.Now().Add(time.Minute * 60 * 24 * 30).Unix(),
-		"id":  user.ID,
+		"data": map[string]interface{}{
+			"user_id": user.ID,
+		},
 	})
 
-	tokenString, err := token.SignedString([]byte("secret"))
+	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_KEY")))
 	if err != nil {
 		log.Println("Error", err)
 		return
