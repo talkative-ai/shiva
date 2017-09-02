@@ -60,7 +60,7 @@ func getProjectHandler(w http.ResponseWriter, r *http.Request) {
 		FROM workbench_projects AS p
 		JOIN team_members AS t
 		ON t."TeamID"=p."TeamID" AND t."UserID"=$1
-		WHERE p."ID"=$1
+		WHERE p."ID"=$2
 	`, tknData["user_id"], id)
 	if member.Role != 1 || err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
