@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
@@ -68,11 +69,5 @@ func getProjectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return project data
-	out, err := project.MarshalJSON()
-	if err != nil {
-		myerrors.ServerError(w, r, err)
-		return
-	}
-
-	w.Write(out)
+	json.NewEncoder(w).Encode(project.PrepareMarshal())
 }
