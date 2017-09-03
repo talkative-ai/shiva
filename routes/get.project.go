@@ -68,6 +68,17 @@ func getProjectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	zones, err := db.DBMap.Select(models.AumZone{}, `SELECT * FROM workbench_zones WHERE "ProjectID"=$1`, id)
+	if err != nil {
+		myerrors.ServerError(w, r, err)
+		return
+	}
+
+	project.Zones = []models.AumZone{}
+	for _, zone := range zones {
+		project.Zones = append(project.Zones, *zone.(*models.AumZone))
+	}
+
 	// Return project data
 	json.NewEncoder(w).Encode(project.PrepareMarshal())
 }
