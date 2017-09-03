@@ -2,12 +2,12 @@ package routes
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 
 	utilities "github.com/artificial-universe-maker/go-utilities"
 	"github.com/artificial-universe-maker/go-utilities/db"
 	"github.com/artificial-universe-maker/go-utilities/models"
+	"github.com/artificial-universe-maker/go-utilities/myerrors"
 	"github.com/artificial-universe-maker/go-utilities/router"
 
 	"github.com/artificial-universe-maker/go-utilities/prehandle"
@@ -38,8 +38,7 @@ func getProjectsHandler(w http.ResponseWriter, r *http.Request) {
 	WHERE p."TeamID"=t."ID"
 	`, tknData["user_id"])
 	if err != nil {
-		log.Println(err)
-		w.WriteHeader(http.StatusNotFound)
+		myerrors.ServerError(w, r, err)
 		return
 	}
 
