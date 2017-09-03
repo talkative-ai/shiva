@@ -62,40 +62,40 @@ func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 	// Check to see if the user exists
 	user := &models.User{}
 	err = db.DBMap.SelectOne(user, "SELECT * FROM users WHERE \"Email\"=$1", tokenInfo.Email)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			// User does not exist. Create and initialize base team
-			newUser = true
-			user.Email = tokenInfo.Email
-			user.GivenName = r.FormValue("gn")
-			user.FamilyName = r.FormValue("fn")
-			if match, err := regexp.MatchString(`\W`, user.FamilyName); match == true ||
-				err != nil ||
-				user.FamilyName == "" ||
-				len(user.FamilyName) > 50 {
-				myerrors.Respond(w, &myerrors.MySimpleError{
-					Code:    http.StatusBadRequest,
-					Req:     r,
-					Message: "invalid_family_name",
-				})
-				return
-			}
-			if match, err := regexp.MatchString(`\W`, user.GivenName); match == true ||
-				err != nil ||
-				user.GivenName == "" ||
-				len(user.GivenName) > 50 {
-				myerrors.Respond(w, &myerrors.MySimpleError{
-					Code:    http.StatusBadRequest,
-					Req:     r,
-					Message: "invalid_given_name",
-				})
-				return
-			}
-			if err := db.CreateAndSaveUser(user); err != nil {
-				myerrors.ServerError(w, r, err)
-				return
-			}
-		} else {
+	if err != nil && err != sql.ErrNoRows {
+		myerrors.ServerError(w, r, err)
+		return
+	}
+
+	if err == sql.ErrNoRows {
+		// User does not exist. Create and initialize base team
+		newUser = true
+		user.Email = tokenInfo.Email
+		user.GivenName = r.FormValue("gn")
+		user.FamilyName = r.FormValue("fn")
+		if match, err := regexp.MatchString(`\W`, user.FamilyName); match == true ||
+			err != nil ||
+			user.FamilyName == "" ||
+			len(user.FamilyName) > 50 {
+			myerrors.Respond(w, &myerrors.MySimpleError{
+				Code:    http.StatusBadRequest,
+				Req:     r,
+				Message: "invalid_family_name",
+			})
+			return
+		}
+		if match, err := regexp.MatchString(`\W`, user.GivenName); match == true ||
+			err != nil ||
+			user.GivenName == "" ||
+			len(user.GivenName) > 50 {
+			myerrors.Respond(w, &myerrors.MySimpleError{
+				Code:    http.StatusBadRequest,
+				Req:     r,
+				Message: "invalid_given_name",
+			})
+			return
+		}
+		if err := db.CreateAndSaveUser(user); err != nil {
 			myerrors.ServerError(w, r, err)
 			return
 		}
