@@ -32,6 +32,7 @@ func main() {
 	doRoute(r, routes.PostProject)
 	doRoute(r, routes.PostAuthGoogle)
 	doRoute(r, routes.GetProject)
+	doRoute(r, routes.GetActor)
 	doRoute(r, routes.PatchProjects)
 
 	c := cors.New(cors.Options{
