@@ -69,11 +69,11 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 
 	tx := db.Instance.MustBegin()
 
-	generatedIDs := map[int]int64{}
+	generatedIDs := map[int]uint64{}
 
 	for _, zone := range project.Zones {
 		if zone.CreateID != nil {
-			var newID int64
+			var newID uint64
 			err = tx.QueryRow(`INSERT INTO workbench_zones ("ProjectID", "Title") VALUES ($1, $2) RETURNING "ID"`, projectID, zone.Title).Scan(&newID)
 			if err != nil {
 				myerrors.ServerError(w, r, err)
@@ -81,6 +81,27 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			generatedIDs[*zone.CreateID] = newID
 			continue
+		}
+	}
+
+	for _, actor := range project.Actors {
+		if actor.CreateID != nil {
+			var newID uint64
+			err = tx.QueryRow(`INSERT INTO workbench_actors ("ProjectID", "Title") VALUES ($1, $2) RETURNING "ID"`, projectID, actor.Title).Scan(&newID)
+			if err != nil {
+				myerrors.ServerError(w, r, err)
+				return
+			}
+			generatedIDs[*actor.CreateID] = newID
+			actor.ID = newID
+		}
+		if actor.ZoneID != nil {
+			// TODO: Ensure zone permissions
+			_, err = tx.Exec(`INSERT INTO workbench_zones_actors ("ZoneID", "ActorID") VALUES ($1, $2)`, actor.ZoneID, actor.ID)
+			if err != nil {
+				myerrors.ServerError(w, r, err)
+				return
+			}
 		}
 	}
 

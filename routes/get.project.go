@@ -79,6 +79,28 @@ func getProjectHandler(w http.ResponseWriter, r *http.Request) {
 		project.Zones = append(project.Zones, *zone.(*models.AumZone))
 	}
 
+	actors, err := db.DBMap.Select(models.AumActor{}, `SELECT * FROM workbench_actors WHERE "ProjectID"=$1`, id)
+	if err != nil {
+		myerrors.ServerError(w, r, err)
+		return
+	}
+
+	project.Actors = []models.AumActor{}
+	for _, actor := range actors {
+		project.Actors = append(project.Actors, *actor.(*models.AumActor))
+	}
+
+	zoneActors, err := db.DBMap.Select(models.AumZoneActor{}, `
+		SELECT DISTINCT za."ZoneID", za."ActorID"
+		FROM workbench_zones as z
+		JOIN workbench_zones_actors as za
+		ON za."ZoneID" = z."ID"
+		WHERE z."ProjectID"=$1`, id)
+
+	project.ZoneActors = []models.AumZoneActor{}
+	for _, za := range zoneActors {
+		project.ZoneActors = append(project.ZoneActors, *za.(*models.AumZoneActor))
+	}
 	// Return project data
 	json.NewEncoder(w).Encode(project.PrepareMarshal())
 }
