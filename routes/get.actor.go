@@ -68,20 +68,22 @@ func getActorHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dialogNodes, err := db.DBMap.Select(models.AumMinimalDialogNode{}, `
-		SELECT dn."ID", dn."Entry", ls."Always", ls."ID" as "LogicalSetID"
+	dialogNodes, err := db.DBMap.Select(models.AumDialogNode{}, `
+		SELECT *
 		FROM workbench_dialog_nodes as dn
-		JOIN workbench_logical_set as ls
-		ON dn."LogicalSetID"=ls."ID"
 		WHERE dn."ActorID"=$1`, id)
+	if err != nil {
+		myerrors.ServerError(w, r, err)
+		return
+	}
 
-	actor.Dialogs = []models.AumMinimalDialogNode{}
+	actor.Dialogs = []models.AumDialogNode{}
 	for _, dn := range dialogNodes {
-		actor.Dialogs = append(actor.Dialogs, *dn.(*models.AumMinimalDialogNode))
+		actor.Dialogs = append(actor.Dialogs, *dn.(*models.AumDialogNode))
 	}
 
 	dialogRelations, err := db.DBMap.Select(models.AumDialogRelation{}, `
-	SELECT DISTINCT dr.*
+		SELECT DISTINCT dr.*
 		FROM workbench_dialog_nodes as dn
 		JOIN workbench_dialog_nodes_relations as dr
 		ON dr."ParentNodeID" = dn."ID"
