@@ -33,6 +33,7 @@ func main() {
 	doRoute(r, routes.PostAuthGoogle)
 	doRoute(r, routes.GetProject)
 	doRoute(r, routes.GetActor)
+	doRoute(r, routes.PutActor)
 	doRoute(r, routes.PatchProjects)
 
 	c := cors.New(cors.Options{
@@ -40,7 +41,7 @@ func main() {
 		AllowCredentials: true,
 		AllowedHeaders:   []string{"x-token", "accept", "content-type"},
 		ExposedHeaders:   []string{"etag", "x-token"},
-		AllowedMethods:   []string{"GET", "PATCH", "POST"},
+		AllowedMethods:   []string{"GET", "PATCH", "POST", "PUT"},
 	})
 
 	http.Handle("/v1/", c.Handler(r))
@@ -48,7 +49,7 @@ func main() {
 	// SSL
 	http.HandleFunc(routes.GetWellknownAcmeChallenge.Path, routes.GetWellknownAcmeChallenge.Handler.(http.HandlerFunc))
 
-	log.Println("Starting server on localhost:8080")
+	log.Println("Shiva starting server on localhost:8080")
 
 	http.ListenAndServe(":8080", nil)
 }
