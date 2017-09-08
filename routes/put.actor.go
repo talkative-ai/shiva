@@ -93,14 +93,45 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 		dialog.ActorID = actorID
 		if dialog.CreateID != nil {
 			var newID uint64
+			if dialog.ParentID != nil {
+				dialog.IsRoot = false
+			}
+			dEntryInput, err := dialog.EntryInput.Value()
+			if err != nil {
+				myerrors.ServerError(w, r, err)
+				return
+			}
+			dAlwaysExec, err := dialog.AlwaysExec.Value()
+			if err != nil {
+				myerrors.ServerError(w, r, err)
+				return
+			}
+			dStatements, err := dialog.Statements.Value()
+			if err != nil {
+				myerrors.ServerError(w, r, err)
+				return
+			}
 			err = tx.QueryRow(`INSERT INTO 
-			workbench_dialogs ("ActorID", "EntryInput", "AlwaysExec", "Statements", "IsRoot")
-			VALUES ($1, $2) RETURNING "ID"`, dialog.ActorID, dialog.EntryInput, dialog.AlwaysExec, dialog.IsRoot).Scan(&newID)
+			workbench_dialog_nodes ("ActorID", "EntryInput", "AlwaysExec", "Statements", "IsRoot")
+			VALUES ($1, $2, $3, $4, $5) RETURNING "ID"`, dialog.ActorID, dEntryInput, dAlwaysExec, dStatements, dialog.IsRoot).Scan(&newID)
 			if err != nil {
 				myerrors.ServerError(w, r, err)
 				return
 			}
 			generatedIDs[*dialog.CreateID] = newID
+			if dialog.ParentID != nil {
+				err = tx.Commit()
+				if err != nil {
+					myerrors.ServerError(w, r, err)
+					return
+				}
+				tx = db.Instance.MustBegin()
+				rel := &models.AumDialogRelation{
+					ParentNodeID: *dialog.ParentID,
+					ChildNodeID:  newID,
+				}
+				db.DBMap.Insert(rel)
+			}
 			continue
 		} else {
 			entry, err := dialog.EntryInput.Value()
