@@ -8,6 +8,7 @@ import (
 	"github.com/artificial-universe-maker/go-utilities/db"
 	"github.com/artificial-universe-maker/go-utilities/models"
 	"github.com/artificial-universe-maker/go-utilities/myerrors"
+	"github.com/gorilla/mux"
 
 	"github.com/artificial-universe-maker/go-utilities/prehandle"
 	"github.com/artificial-universe-maker/go-utilities/router"
@@ -19,7 +20,7 @@ import (
 // Accepts models.UserRegister
 // Responds with status of success or failure
 var PostPublish = &router.Route{
-	Path:       "/v1/publish",
+	Path:       "/v1/publish/{id:[0-9]+}",
 	Method:     "POST",
 	Handler:    http.HandlerFunc(postPublishHandler),
 	Prehandler: []prehandle.Prehandler{prehandle.JWT},
@@ -27,7 +28,7 @@ var PostPublish = &router.Route{
 
 func postPublishHandler(w http.ResponseWriter, r *http.Request) {
 
-	r.ParseForm()
+	urlparams := mux.Vars(r)
 
 	token, _ := utilities.ParseJTWClaims(w.Header().Get("x-token"))
 	tknData := token["data"].(map[string]interface{})
@@ -39,13 +40,13 @@ func postPublishHandler(w http.ResponseWriter, r *http.Request) {
 		JOIN team_members AS t
 		ON t."TeamID"=p."TeamID" AND t."UserID"=$1
 		WHERE p."ID"=$2
-	`, tknData["user_id"], r.Form.Get("project-id"))
+	`, tknData["user_id"], urlparams["id"])
 	if member.Role != 1 || err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
-	rq, err := http.NewRequest("GET", fmt.Sprintf("http://lakshmi:8080/?project-id=%v", r.Form.Get("project-id")), nil)
+	rq, err := http.NewRequest("GET", fmt.Sprintf("http://lakshmi:8080/?project-id=%v", urlparams["id"]), nil)
 	if err != nil {
 		myerrors.ServerError(w, r, err)
 	}
