@@ -30,6 +30,7 @@ func main() {
 
 	doRoute(r, routes.GetProjects)
 	doRoute(r, routes.PostProject)
+	doRoute(r, routes.PostPublish)
 	doRoute(r, routes.PostAuthGoogle)
 	doRoute(r, routes.GetProject)
 	doRoute(r, routes.GetActor)

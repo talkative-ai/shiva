@@ -21,29 +21,25 @@ var PostProject = &router.Route{
 	Path:       "/v1/project",
 	Method:     "POST",
 	Handler:    http.HandlerFunc(postProjectHandler),
-	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.RequireBody(65535)},
+	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.JWT, prehandle.RequireBody(65535)},
+}
+
+type postProjectRequest struct {
+	Title string
 }
 
 func postProjectHandler(w http.ResponseWriter, r *http.Request) {
 
 	project := new(models.AumProject)
-	//user := new(models.User)
+	postProject := postProjectRequest{}
 
-	// err := json.Unmarshal([]byte(r.Header.Get("X-Body")), user)
-	// if err != nil {
-	// 	myerrors.ServerError(w, r, err)
-	// 	return
-	// }
-
-	// fmt.Println("Here we are", r.Header.Get("X-Body"))
-
-	err := json.Unmarshal([]byte(r.Header.Get("X-Body")), project)
+	err := json.Unmarshal([]byte(r.Header.Get("X-Body")), postProject)
 	if err != nil {
 		myerrors.ServerError(w, r, err)
 		return
 	}
 
-	// project.OwnerID = user.Sub
+	project.Title = postProject.Title
 
 	err = db.DBMap.Insert(project)
 	if err != nil {
