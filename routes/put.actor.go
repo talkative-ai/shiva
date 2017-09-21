@@ -2,7 +2,6 @@ package routes
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -42,14 +41,15 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate actor access
+	// Fetch the actor ProjectID and simultaneously check if it exists
 	actor := &models.AumActor{}
 	err = db.DBMap.SelectOne(actor, `SELECT "ProjectID" FROM workbench_actors WHERE "ID"=$1`, actorID)
 	if err != nil {
-		log.Printf("Actor %+v params %+v", *actor, urlparams)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
+
+	projectID := actor.ProjectID
 
 	err = json.Unmarshal([]byte(r.Header.Get("X-Body")), actor)
 	if err != nil {
@@ -58,6 +58,7 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	actor.ID = actorID
+	actor.ProjectID = projectID
 
 	token, err := utilities.ParseJTWClaims(w.Header().Get("x-token"))
 	tknData := token["data"].(map[string]interface{})
@@ -91,11 +92,20 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 
 	for _, dialog := range actor.Dialogs {
 		dialog.ActorID = actorID
+		// Creating a new dialog
 		if dialog.CreateID != nil {
 			var newID uint64
-			if dialog.ParentID != nil {
-				dialog.IsRoot = false
+
+			// Default IsRoot values for the dialog
+			if dialog.ParentID != nil && dialog.IsRoot == nil {
+				v := false
+				dialog.IsRoot = &v
+			} else if dialog.ParentID == nil && dialog.IsRoot == nil {
+				v := true
+				dialog.IsRoot = &v
 			}
+
+			// Prepare these values for the SQL query
 			dEntryInput, err := dialog.EntryInput.Value()
 			if err != nil {
 				myerrors.ServerError(w, r, err)
@@ -111,9 +121,10 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 				myerrors.ServerError(w, r, err)
 				return
 			}
+
 			err = tx.QueryRow(`INSERT INTO 
 			workbench_dialog_nodes ("ActorID", "EntryInput", "AlwaysExec", "Statements", "IsRoot")
-			VALUES ($1, $2, $3, $4, $5) RETURNING "ID"`, dialog.ActorID, dEntryInput, dAlwaysExec, dStatements, dialog.IsRoot).Scan(&newID)
+			VALUES ($1, $2, $3, $4, $5) RETURNING "ID"`, dialog.ActorID, dEntryInput, dAlwaysExec, dStatements, *dialog.IsRoot).Scan(&newID)
 			if err != nil {
 				myerrors.ServerError(w, r, err)
 				return
