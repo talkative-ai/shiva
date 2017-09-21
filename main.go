@@ -36,7 +36,10 @@ func main() {
 	doRoute(r, routes.GetActor)
 	doRoute(r, routes.GetZone)
 	doRoute(r, routes.PutActor)
-	doRoute(r, routes.PatchProjects)
+	doRoute(r, routes.PatchProject)
+
+	doRoute(r, routes.DeleteActor)
+	doRoute(r, routes.DeleteZone)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"https://aum.ai", "https://workbench.aum.ai", "http://localhost:3000", "http://localhost:8080", "http://localhost:3001"},

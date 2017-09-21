@@ -20,8 +20,11 @@ import (
 // Path: "/user/register",
 // Method: "PATCH",
 // Accepts models.TokenValidate
-// Responds with status of success or failure
-var PatchProjects = &router.Route{
+/**
+	PatchProject enables the creation of new entities within a project.
+	In order to update existing entities, use a Put{Entity} endpoint.
+**/
+var PatchProject = &router.Route{
 	Path:       "/v1/project/{id:[0-9]+}",
 	Method:     "PATCH",
 	Handler:    http.HandlerFunc(patchProjectsHandler),
@@ -70,6 +73,7 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 	tx := db.Instance.MustBegin()
 
 	generatedIDs := map[int]uint64{}
+	zoneExists := map[uint64]bool{}
 
 	for _, zone := range project.Zones {
 		if zone.CreateID != nil {
@@ -96,7 +100,19 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 			actor.ID = newID
 		}
 		if actor.ZoneID != nil {
-			// TODO: Ensure zone permissions
+			if _, ok := zoneExists[*actor.ZoneID]; !ok {
+				err = db.DBMap.SelectOne(member, `
+					SELECT z."ID"
+					FROM workbench_zones as z
+					JOIN team_members AS t
+					WHERE z."ID"=$1 AND z."ProjectID"=$2
+				`, actor.ZoneID, actor.ProjectID)
+				if err != nil {
+					w.WriteHeader(http.StatusUnauthorized)
+					return
+				}
+				zoneExists[*actor.ZoneID] = true
+			}
 			_, err = tx.Exec(`INSERT INTO workbench_zones_actors ("ZoneID", "ActorID") VALUES ($1, $2)`, actor.ZoneID, actor.ID)
 			if err != nil {
 				myerrors.ServerError(w, r, err)
