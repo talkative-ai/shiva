@@ -15,19 +15,19 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// GetZone router.Route
+// DeleteZone router.Route
 // Path: "/zone/{id}",
 // Method: "GET",
 // Accepts models.TokenValidate
 // Responds with the zone data
-var GetZone = &router.Route{
+var DeleteZone = &router.Route{
 	Path:       "/v1/zone/{id:[0-9]+}",
 	Method:     "DELETE",
-	Handler:    http.HandlerFunc(getZoneHandler),
+	Handler:    http.HandlerFunc(deleteZoneHandler),
 	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.JWT},
 }
 
-func getZoneHandler(w http.ResponseWriter, r *http.Request) {
+func deleteZoneHandler(w http.ResponseWriter, r *http.Request) {
 
 	urlparams := mux.Vars(r)
 

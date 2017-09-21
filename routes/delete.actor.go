@@ -16,11 +16,16 @@ import (
 	"github.com/gorilla/mux"
 )
 
+<<<<<<< HEAD
 // GetActor router.Route
+=======
+// DeleteActor router.Route
+>>>>>>> new
 // Path: "/actor/{id}",
 // Method: "GET",
 // Accepts models.TokenValidate
 // Responds with the actor data
+<<<<<<< HEAD
 var GetActor = &router.Route{
 	Path:       "/v1/actor/{id:[0-9]+}",
 	Method:     "DELETE",
@@ -29,6 +34,16 @@ var GetActor = &router.Route{
 }
 
 func getActorHandler(w http.ResponseWriter, r *http.Request) {
+=======
+var DeleteActor = &router.Route{
+	Path:       "/v1/actor/{id:[0-9]+}",
+	Method:     "DELETE",
+	Handler:    http.HandlerFunc(deleteActorHandler),
+	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.JWT},
+}
+
+func deleteActorHandler(w http.ResponseWriter, r *http.Request) {
+>>>>>>> new
 
 	urlparams := mux.Vars(r)
 
