@@ -42,7 +42,7 @@ func main() {
 	doRoute(r, routes.DeleteZone)
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"https://aum.ai", "https://workbench.aum.ai", "http://localhost:3000", "http://localhost:8080", "http://localhost:3001"},
+		AllowedOrigins:   []string{"https://aum.ai", "http://brahman.ngrok.io", "https://brahman.ngrok.io", "https://workbench.aum.ai", "http://localhost:3000", "http://localhost:8080", "http://localhost:3001"},
 		AllowCredentials: true,
 		AllowedHeaders:   []string{"x-token", "accept", "content-type"},
 		ExposedHeaders:   []string{"etag", "x-token"},

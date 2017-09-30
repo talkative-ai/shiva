@@ -1,8 +1,10 @@
 FROM golang:alpine
 
-ADD . /go/src
+RUN apk add --update git
 
-RUN go install github.com/artificial-universe-maker/shiva
+COPY docker.gitconfig /root/.gitconfig
+
+RUN go get github.com/artificial-universe-maker/shiva
 
 ENTRYPOINT /go/bin/shiva
 
