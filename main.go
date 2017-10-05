@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"golang.org/x/crypto/acme/autocert"
 
@@ -55,6 +56,11 @@ func main() {
 	http.Handle("/v1/", c.Handler(r))
 
 	log.Println("Shiva starting server on localhost:8080")
+
+	if os.Getenv("DEVELOPMENT") == "true" {
+		log.Fatal(http.ListenAndServe(":8080", nil))
+		return
+	}
 
 	m := autocert.Manager{
 		Cache:      autocert.DirCache("secret-dir"),
