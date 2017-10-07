@@ -35,7 +35,7 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 
 	urlparams := mux.Vars(r)
 
-	projectID, err := strconv.ParseInt(urlparams["id"], 10, 64)
+	projectID, err := strconv.ParseUint(urlparams["id"], 10, 64)
 	if err != nil {
 		myerrors.Respond(w, &myerrors.MySimpleError{
 			Code:    http.StatusBadRequest,
@@ -101,14 +101,18 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		if actor.ZoneID != nil {
 			if _, ok := zoneExists[*actor.ZoneID]; !ok {
-				err = db.DBMap.SelectOne(member, `
+				zone := &models.AumZone{}
+				err = db.DBMap.SelectOne(zone, `
 					SELECT z."ID"
 					FROM workbench_zones as z
-					JOIN team_members AS t
 					WHERE z."ID"=$1 AND z."ProjectID"=$2
-				`, actor.ZoneID, actor.ProjectID)
+				`, actor.ZoneID, projectID)
 				if err != nil {
-					w.WriteHeader(http.StatusUnauthorized)
+					myerrors.Respond(w, &myerrors.MySimpleError{
+						Code: http.StatusUnauthorized,
+						Log:  err.Error(),
+						Req:  r,
+					})
 					return
 				}
 				zoneExists[*actor.ZoneID] = true
