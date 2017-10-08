@@ -49,6 +49,8 @@ func main() {
 		AllowedMethods:   []string{"GET", "PATCH", "POST", "PUT"},
 	})
 
+	http.Handle("/", routes.GetIndex.Handler)
+
 	http.Handle("/v1/", c.Handler(r))
 
 	log.Println("Shiva starting server on localhost:8080")
