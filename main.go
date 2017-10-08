@@ -1,13 +1,9 @@
 package main
 
 import (
-	"crypto/tls"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
-
-	"golang.org/x/crypto/acme/autocert"
 
 	"github.com/artificial-universe-maker/go-utilities/db"
 	"github.com/artificial-universe-maker/go-utilities/prehandle"
@@ -57,21 +53,6 @@ func main() {
 
 	log.Println("Shiva starting server on localhost:8080")
 
-	if os.Getenv("DEVELOPMENT") == "true" {
-		log.Fatal(http.ListenAndServe(":8080", nil))
-		return
-	}
-
-	m := autocert.Manager{
-		Cache:      autocert.DirCache("secret-dir"),
-		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist("api.workbench.aum.ai"),
-		Email:      "info@aum.ai",
-	}
-	s := &http.Server{
-		Addr:      ":8080",
-		TLSConfig: &tls.Config{GetCertificate: m.GetCertificate},
-	}
-	log.Fatal(s.ListenAndServeTLS("", ""))
+	log.Fatal(http.ListenAndServe(":8080", nil))
 
 }
