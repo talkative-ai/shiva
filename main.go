@@ -49,7 +49,9 @@ func main() {
 		AllowedMethods:   []string{"GET", "PATCH", "POST", "PUT"},
 	})
 
+	http.Handle("/", routes.GetIndex.Handler)
 	http.Handle("/healthz", routes.GetIndex.Handler)
+	http.Handle("/workbench/healthz", routes.GetIndex.Handler)
 
 	http.Handle("/v1/", c.Handler(r))
 
