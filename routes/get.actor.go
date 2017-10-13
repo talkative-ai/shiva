@@ -22,7 +22,7 @@ import (
 // Accepts models.TokenValidate
 // Responds with the actor data
 var GetActor = &router.Route{
-	Path:       "/v1/actor/{id:[0-9]+}",
+	Path:       "/workbench/v1/actor/{id:[0-9]+}",
 	Method:     "GET",
 	Handler:    http.HandlerFunc(getActorHandler),
 	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.JWT},

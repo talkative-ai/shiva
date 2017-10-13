@@ -20,7 +20,7 @@ import (
 // Accepts models.UserRegister
 // Responds with status of success or failure
 var PostPublish = &router.Route{
-	Path:       "/v1/publish/{id:[0-9]+}",
+	Path:       "/workbench/v1/publish/{id:[0-9]+}",
 	Method:     "POST",
 	Handler:    http.HandlerFunc(postPublishHandler),
 	Prehandler: []prehandle.Prehandler{prehandle.JWT},

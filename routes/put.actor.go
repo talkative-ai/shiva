@@ -21,7 +21,7 @@ import (
 // Accepts models.TokenValidate
 // Responds with status of success or failure
 var PutActor = &router.Route{
-	Path:       "/v1/actor/{id:[0-9]+}",
+	Path:       "/workbench/v1/actor/{id:[0-9]+}",
 	Method:     "PUT",
 	Handler:    http.HandlerFunc(putActorHandler),
 	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.JWT, prehandle.RequireBody(65535)},

@@ -21,7 +21,7 @@ import (
 // Accepts models.TokenValidate
 // Responds with the zone data
 var DeleteZone = &router.Route{
-	Path:       "/v1/zone/{id:[0-9]+}",
+	Path:       "/workbench/v1/zone/{id:[0-9]+}",
 	Method:     "DELETE",
 	Handler:    http.HandlerFunc(deleteZoneHandler),
 	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.JWT},

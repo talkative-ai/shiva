@@ -22,7 +22,7 @@ import (
 // Accepts models.TokenValidate
 // Responds with the actor data
 var DeleteActor = &router.Route{
-	Path:       "/v1/actor/{id:[0-9]+}",
+	Path:       "/workbench/v1/actor/{id:[0-9]+}",
 	Method:     "DELETE",
 	Handler:    http.HandlerFunc(deleteActorHandler),
 	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.JWT},

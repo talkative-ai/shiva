@@ -22,7 +22,7 @@ import (
 // Accepts models.TokenValidate
 // Responds with the project data
 var GetProject = &router.Route{
-	Path:       "/v1/project/{id:[0-9]+}",
+	Path:       "/workbench/v1/project/{id:[0-9]+}",
 	Method:     "GET",
 	Handler:    http.HandlerFunc(getProjectHandler),
 	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.JWT},

@@ -19,12 +19,12 @@ import (
 )
 
 // PostAuthGoogle router.Route
-// Path: "/v1/auth/google",
+// Path: "/workbench/v1/auth/google",
 // Method: "GET",
 // Validates a Google OAuth 2 token.
 // Responds with status of success or failure
 var PostAuthGoogle = &router.Route{
-	Path:       "/v1/auth/google",
+	Path:       "/workbench/v1/auth/google",
 	Method:     "GET",
 	Handler:    http.HandlerFunc(postAuthGoogleHandler),
 	Prehandler: []prehandle.Prehandler{},

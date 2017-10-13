@@ -18,7 +18,7 @@ import (
 // Accepts models.TokenValidate
 // Responds with status of success or failure
 var PostProject = &router.Route{
-	Path:       "/v1/project",
+	Path:       "/workbench/v1/project",
 	Method:     "POST",
 	Handler:    http.HandlerFunc(postProjectHandler),
 	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.JWT, prehandle.RequireBody(65535)},

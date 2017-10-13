@@ -25,7 +25,7 @@ import (
 	In order to update existing entities, use a Put{Entity} endpoint.
 **/
 var PatchProject = &router.Route{
-	Path:       "/v1/project/{id:[0-9]+}",
+	Path:       "/workbench/v1/project/{id:[0-9]+}",
 	Method:     "PATCH",
 	Handler:    http.HandlerFunc(patchProjectsHandler),
 	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.JWT, prehandle.RequireBody(65535)},

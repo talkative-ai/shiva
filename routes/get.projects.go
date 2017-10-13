@@ -19,7 +19,7 @@ import (
 // Accepts models.TokenValidate
 // Responds with status of success or failure
 var GetProjects = &router.Route{
-	Path:       "/v1/projects",
+	Path:       "/workbench/v1/projects",
 	Method:     "GET",
 	Handler:    http.HandlerFunc(getProjectsHandler),
 	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.JWT},

@@ -22,7 +22,7 @@ import (
 // Accepts models.TokenValidate
 // Responds with the zone data
 var GetZone = &router.Route{
-	Path:       "/v1/zone/{id:[0-9]+}",
+	Path:       "/workbench/v1/zone/{id:[0-9]+}",
 	Method:     "GET",
 	Handler:    http.HandlerFunc(getZoneHandler),
 	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.JWT},
