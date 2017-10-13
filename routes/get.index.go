@@ -22,7 +22,11 @@ var GetIndex = &router.Route{
 }
 
 func getIndexHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(httputil.DumpRequest(r, true))
+	bs, err := httputil.DumpRequest(r, true)
+	if err != nil {
+		fmt.Println("Error", err)
+	}
+	fmt.Println(string(bs))
 	fmt.Fprintf(w, "Want to help us build this api and more? Email us: dev@aum.ai")
 
 }
