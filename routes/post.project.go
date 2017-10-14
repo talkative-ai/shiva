@@ -100,11 +100,16 @@ func postProjectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = db.Instance.Exec(`INSERT INTO workbench_projects ("Title", "TeamID") VALUES ($1, $2) RETURNING "ID"`, project.Title, team.TeamID)
+	var newID uint64
+	err = db.Instance.QueryRow(`INSERT INTO workbench_projects ("Title", "TeamID") VALUES ($1, $2) RETURNING "ID"`, project.Title, team.TeamID).Scan(&newID)
 	if err != nil {
 		myerrors.ServerError(w, r, err)
 		return
 	}
+
+	project.ID = newID
+
+	json.NewEncoder(w).Encode(project.PrepareMarshal())
 
 	return
 }
