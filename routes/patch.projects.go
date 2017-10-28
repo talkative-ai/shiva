@@ -72,7 +72,7 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 
 	tx := db.Instance.MustBegin()
 
-	generatedIDs := map[int]uint64{}
+	generatedIDs := map[string]uint64{}
 	zoneExists := map[uint64]bool{}
 
 	for _, zone := range project.Zones {

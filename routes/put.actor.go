@@ -88,7 +88,7 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 	// Probably generalize validations across models
 	db.DBMap.Update(actor)
 
-	generatedIDs := map[int]uint64{}
+	generatedIDs := map[string]uint64{}
 
 	for _, dialog := range actor.Dialogs {
 		dialog.ActorID = actorID
@@ -97,11 +97,8 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 			var newID uint64
 
 			// Default IsRoot values for the dialog
-			if dialog.ParentID != nil && dialog.IsRoot == nil {
+			if dialog.IsRoot == nil {
 				v := false
-				dialog.IsRoot = &v
-			} else if dialog.ParentID == nil && dialog.IsRoot == nil {
-				v := true
 				dialog.IsRoot = &v
 			}
 
@@ -130,19 +127,6 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			generatedIDs[*dialog.CreateID] = newID
-			if dialog.ParentID != nil {
-				err = tx.Commit()
-				if err != nil {
-					myerrors.ServerError(w, r, err)
-					return
-				}
-				tx = db.Instance.MustBegin()
-				rel := &models.AumDialogRelation{
-					ParentNodeID: *dialog.ParentID,
-					ChildNodeID:  newID,
-				}
-				db.DBMap.Insert(rel)
-			}
 			continue
 		} else {
 			entry, err := dialog.EntryInput.Value()
@@ -167,9 +151,34 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	for _, relation := range actor.DialogRelations {
+		if relation.PatchAction == nil {
+			continue
+		}
+
+		switch *relation.PatchAction {
+		case models.PatchActionCreate:
+			switch v := relation.ParentNodeID.(type) {
+			// If the ParentNodeID is a string, then this is a CreateID
+			case string:
+				relation.ParentNodeID = generatedIDs[v]
+			}
+			switch v := relation.ChildNodeID.(type) {
+			// If the ChildNodeID is a string, then this is a CreateID
+			case string:
+				relation.ChildNodeID = generatedIDs[v]
+			}
+			tx.Exec(`INSERT INTO
+				workbench_dialog_nodes_relations ("ParentNodeID", "ChildNodeID")
+				VALUES ($1, $2)`, relation.ParentNodeID, relation.ChildNodeID)
+		}
+	}
+
 	err = tx.Commit()
 	if err != nil {
 		myerrors.ServerError(w, r, err)
 		return
 	}
+
+	json.NewEncoder(w).Encode(generatedIDs)
 }
