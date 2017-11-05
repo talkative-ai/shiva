@@ -83,6 +83,7 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 				myerrors.ServerError(w, r, err)
 				return
 			}
+			w.WriteHeader(http.StatusCreated)
 			generatedIDs[*zone.CreateID] = newID
 			continue
 		}
@@ -96,31 +97,34 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 				myerrors.ServerError(w, r, err)
 				return
 			}
+			w.WriteHeader(http.StatusCreated)
 			generatedIDs[*actor.CreateID] = newID
 			actor.ID = newID
 		}
-		if actor.ZoneID != nil {
-			if _, ok := zoneExists[*actor.ZoneID]; !ok {
-				zone := &models.AumZone{}
-				err = db.DBMap.SelectOne(zone, `
-					SELECT z."ID"
-					FROM workbench_zones as z
-					WHERE z."ID"=$1 AND z."ProjectID"=$2
-				`, actor.ZoneID, projectID)
+		if actor.ZoneIDs != nil {
+			for _, zoneID := range *actor.ZoneIDs {
+				if _, ok := zoneExists[zoneID]; !ok {
+					zone := &models.AumZone{}
+					err = db.DBMap.SelectOne(zone, `
+						SELECT z."ID"
+						FROM workbench_zones as z
+						WHERE z."ID"=$1 AND z."ProjectID"=$2
+					`, zoneID, projectID)
+					if err != nil {
+						myerrors.Respond(w, &myerrors.MySimpleError{
+							Code: http.StatusUnauthorized,
+							Log:  err.Error(),
+							Req:  r,
+						})
+						return
+					}
+					zoneExists[zoneID] = true
+				}
+				_, err = tx.Exec(`INSERT INTO workbench_zones_actors ("ZoneID", "ActorID") VALUES ($1, $2)`, zoneID, actor.ID)
 				if err != nil {
-					myerrors.Respond(w, &myerrors.MySimpleError{
-						Code: http.StatusUnauthorized,
-						Log:  err.Error(),
-						Req:  r,
-					})
+					myerrors.ServerError(w, r, err)
 					return
 				}
-				zoneExists[*actor.ZoneID] = true
-			}
-			_, err = tx.Exec(`INSERT INTO workbench_zones_actors ("ZoneID", "ActorID") VALUES ($1, $2)`, actor.ZoneID, actor.ID)
-			if err != nil {
-				myerrors.ServerError(w, r, err)
-				return
 			}
 		}
 	}

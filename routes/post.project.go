@@ -109,6 +109,8 @@ func postProjectHandler(w http.ResponseWriter, r *http.Request) {
 
 	project.ID = newID
 
+	w.WriteHeader(http.StatusCreated)
+
 	json.NewEncoder(w).Encode(project.PrepareMarshal())
 
 	return
