@@ -73,7 +73,6 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 	tx := db.Instance.MustBegin()
 
 	generatedIDs := map[string]uint64{}
-	zoneExists := map[uint64]bool{}
 
 	for _, zone := range project.Zones {
 		if zone.CreateID != nil {
@@ -101,31 +100,31 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 			generatedIDs[*actor.CreateID] = newID
 			actor.ID = newID
 		}
-		if actor.ZoneIDs != nil {
-			for _, zoneID := range *actor.ZoneIDs {
-				if _, ok := zoneExists[zoneID]; !ok {
-					zone := &models.AumZone{}
-					err = db.DBMap.SelectOne(zone, `
-						SELECT z."ID"
-						FROM workbench_zones as z
-						WHERE z."ID"=$1 AND z."ProjectID"=$2
-					`, zoneID, projectID)
-					if err != nil {
-						myerrors.Respond(w, &myerrors.MySimpleError{
-							Code: http.StatusUnauthorized,
-							Log:  err.Error(),
-							Req:  r,
-						})
-						return
-					}
-					zoneExists[zoneID] = true
-				}
-				_, err = tx.Exec(`INSERT INTO workbench_zones_actors ("ZoneID", "ActorID") VALUES ($1, $2)`, zoneID, actor.ID)
-				if err != nil {
-					myerrors.ServerError(w, r, err)
-					return
-				}
-			}
+	}
+
+	for _, za := range project.ZoneActors {
+		if za.PatchAction == nil {
+			continue
+		}
+
+		switch v := za.ActorID.(type) {
+		// If the ActorID is a string, then this is a CreateID
+		case string:
+			za.ActorID = generatedIDs[v]
+		}
+		switch v := za.ZoneID.(type) {
+		// If the ZoneID is a string, then this is a CreateID
+		case string:
+			za.ZoneID = generatedIDs[v]
+		}
+
+		switch *za.PatchAction {
+		case models.PatchActionCreate:
+			tx.Exec(`INSERT INTO
+				workbench_zone_actors ("ZoneID", "ActorID")
+				VALUES ($1, $2)`, za.ZoneID, za.ActorID)
+		case models.PatchActionDelete:
+			tx.Exec(`DELETE FROM workbench_zone_actors WHERE "ZoneID"=$1 AND "ActorID"=$2`, za.ZoneID, za.ActorID)
 		}
 	}
 

@@ -156,50 +156,22 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
+		switch v := relation.ParentNodeID.(type) {
+		// If the ParentNodeID is a string, then this is a CreateID
+		case string:
+			relation.ParentNodeID = generatedIDs[v]
+		}
+		switch v := relation.ChildNodeID.(type) {
+		// If the ChildNodeID is a string, then this is a CreateID
+		case string:
+			relation.ChildNodeID = generatedIDs[v]
+		}
+
 		switch *relation.PatchAction {
 		case models.PatchActionCreate:
-			switch v := relation.ParentNodeID.(type) {
-			// If the ParentNodeID is a string, then this is a CreateID
-			case string:
-				relation.ParentNodeID = generatedIDs[v]
-			}
-			switch v := relation.ChildNodeID.(type) {
-			// If the ChildNodeID is a string, then this is a CreateID
-			case string:
-				relation.ChildNodeID = generatedIDs[v]
-			}
 			tx.Exec(`INSERT INTO
 				workbench_dialog_nodes_relations ("ParentNodeID", "ChildNodeID")
 				VALUES ($1, $2)`, relation.ParentNodeID, relation.ChildNodeID)
-		}
-	}
-
-	zoneExists := map[uint64]bool{}
-
-	if actor.ZoneIDs != nil {
-		for _, zoneID := range *actor.ZoneIDs {
-			if _, ok := zoneExists[zoneID]; !ok {
-				zone := &models.AumZone{}
-				err = db.DBMap.SelectOne(zone, `
-					SELECT z."ID"
-					FROM workbench_zones as z
-					WHERE z."ID"=$1 AND z."ProjectID"=$2
-				`, zoneID, projectID)
-				if err != nil {
-					myerrors.Respond(w, &myerrors.MySimpleError{
-						Code: http.StatusUnauthorized,
-						Log:  err.Error(),
-						Req:  r,
-					})
-					return
-				}
-				zoneExists[zoneID] = true
-			}
-			_, err = tx.Exec(`INSERT INTO workbench_zones_actors ("ZoneID", "ActorID") VALUES ($1, $2)`, zoneID, actor.ID)
-			if err != nil {
-				myerrors.ServerError(w, r, err)
-				return
-			}
 		}
 	}
 
