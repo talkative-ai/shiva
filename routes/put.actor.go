@@ -172,6 +172,10 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 			tx.Exec(`INSERT INTO
 				workbench_dialog_nodes_relations ("ParentNodeID", "ChildNodeID")
 				VALUES ($1, $2)`, relation.ParentNodeID, relation.ChildNodeID)
+		case models.PatchActionDelete:
+			tx.Exec(`DELETE FROM
+				workbench_dialog_nodes_relations
+				WHERE "ParentNodeID"=$1 AND "ChildNodeID"=$2`, relation.ParentNodeID, relation.ChildNodeID)
 		}
 	}
 
