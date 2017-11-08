@@ -121,10 +121,10 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 		switch *za.PatchAction {
 		case models.PatchActionCreate:
 			tx.Exec(`INSERT INTO
-				workbench_zone_actors ("ZoneID", "ActorID")
+				workbench_zones_actors ("ZoneID", "ActorID")
 				VALUES ($1, $2)`, za.ZoneID, za.ActorID)
 		case models.PatchActionDelete:
-			tx.Exec(`DELETE FROM workbench_zone_actors WHERE "ZoneID"=$1 AND "ActorID"=$2`, za.ZoneID, za.ActorID)
+			tx.Exec(`DELETE FROM workbench_zones_actors WHERE "ZoneID"=$1 AND "ActorID"=$2`, za.ZoneID, za.ActorID)
 		}
 	}
 
