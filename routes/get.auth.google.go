@@ -9,11 +9,11 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/artificial-universe-maker/go-utilities/db"
-	"github.com/artificial-universe-maker/go-utilities/models"
-	"github.com/artificial-universe-maker/go-utilities/myerrors"
-	"github.com/artificial-universe-maker/go-utilities/prehandle"
-	"github.com/artificial-universe-maker/go-utilities/router"
+	"github.com/artificial-universe-maker/core/db"
+	"github.com/artificial-universe-maker/core/models"
+	"github.com/artificial-universe-maker/core/myerrors"
+	"github.com/artificial-universe-maker/core/prehandle"
+	"github.com/artificial-universe-maker/core/router"
 	jwt "github.com/dgrijalva/jwt-go"
 	auth "google.golang.org/api/oauth2/v2"
 )

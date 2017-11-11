@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 
-	"github.com/artificial-universe-maker/go-utilities/prehandle"
-	"github.com/artificial-universe-maker/go-utilities/router"
+	"github.com/artificial-universe-maker/core/prehandle"
+	"github.com/artificial-universe-maker/core/router"
 )
 
 // GetIndex router.Route

@@ -5,9 +5,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/artificial-universe-maker/go-utilities/db"
-	"github.com/artificial-universe-maker/go-utilities/prehandle"
-	"github.com/artificial-universe-maker/go-utilities/router"
+	"github.com/artificial-universe-maker/core/db"
+	"github.com/artificial-universe-maker/core/prehandle"
+	"github.com/artificial-universe-maker/core/router"
 	"github.com/artificial-universe-maker/shiva/routes"
 	mux "github.com/gorilla/mux"
 	"github.com/rs/cors"
