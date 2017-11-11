@@ -42,7 +42,7 @@ func getZoneHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate zone access
+	// Fetch the zone
 	zone := &models.AumZone{}
 	err = db.DBMap.SelectOne(zone, `SELECT * FROM workbench_zones WHERE "ID"=$1`, id)
 	if err != nil {
@@ -55,6 +55,7 @@ func getZoneHandler(w http.ResponseWriter, r *http.Request) {
 	tknData := token["data"].(map[string]interface{})
 	log.Println(tknData)
 
+	// Validate access
 	member := &models.TeamMember{}
 	err = db.DBMap.SelectOne(member, `
 		SELECT t."Role"
@@ -66,6 +67,20 @@ func getZoneHandler(w http.ResponseWriter, r *http.Request) {
 	if member.Role != 1 || err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
+	}
+
+	var triggers []interface{}
+
+	triggers, err = db.DBMap.Select(models.AumTrigger{}, `
+		SELECT * FROM workbench_triggers t
+		JOIN workbench_zones_triggers zt
+		ON zt."TriggerID"=t."ID"
+		AND zt."ZoneID"=$1
+	`, zone.ID)
+
+	zone.Triggers = map[models.AumTriggerType]models.AumTrigger{}
+	for _, trigger := range triggers {
+		zone.Triggers[trigger.(*models.AumTrigger).TriggerType] = *trigger.(*models.AumTrigger)
 	}
 
 	// Return zone data
