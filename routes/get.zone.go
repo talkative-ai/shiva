@@ -73,9 +73,7 @@ func getZoneHandler(w http.ResponseWriter, r *http.Request) {
 
 	triggers, err = db.DBMap.Select(models.AumTrigger{}, `
 		SELECT * FROM workbench_triggers t
-		JOIN workbench_zones_triggers zt
-		ON zt."TriggerID"=t."ID"
-		AND zt."ZoneID"=$1
+		WHERE t."ZoneID"=$1
 	`, zone.ID)
 
 	zone.Triggers = map[models.AumTriggerType]models.AumTrigger{}

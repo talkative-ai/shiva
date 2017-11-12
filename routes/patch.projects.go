@@ -70,6 +70,8 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	project.ID = projectID
+
 	tx := db.Instance.MustBegin()
 
 	generatedIDs := map[string]uint64{}
@@ -85,6 +87,41 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusCreated)
 			generatedIDs[*zone.CreateID] = newID
 			continue
+		}
+		for t, trigger := range zone.Triggers {
+
+			if trigger.PatchAction == nil {
+				return
+			}
+
+			if trigger.PatchAction != nil && *trigger.PatchAction == models.PatchActionDelete {
+				tx.Exec(`DELETE FROM workbench_triggers WHERE "ProjectID"=$1 AND "TriggerType"=$2`, project.ID, trigger.TriggerType)
+				continue
+			}
+
+			if trigger.PatchAction != nil && *trigger.PatchAction == models.PatchActionCreate {
+				trigger.TriggerType = t
+				switch v := trigger.ZoneID.(type) {
+				// If the ZoneID is a string, then this is a CreateID
+				case string:
+					trigger.ZoneID = generatedIDs[v]
+				}
+				execPrepared, err := trigger.AlwaysExec.Value()
+				if err != nil {
+					myerrors.ServerError(w, r, err)
+					return
+				}
+				_, err = tx.Exec(`
+					INSERT INTO workbench_triggers ("ProjectID", "ZoneID", "TriggerType", "AlwaysExec")
+					VALUES ($1, $2, $3, $4)
+					RETURNING "ID"`, project.ID, zone.ID, trigger.TriggerType, execPrepared)
+				if err != nil {
+					myerrors.ServerError(w, r, err)
+					return
+				}
+				w.WriteHeader(http.StatusCreated)
+				continue
+			}
 		}
 	}
 
@@ -120,6 +157,7 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 
 		switch *za.PatchAction {
 		case models.PatchActionCreate:
+			tx.Exec(`DELETE FROM workbench_zones_actors WHERE "ZoneID"=$1 AND "ActorID"=$2`, za.ZoneID, za.ActorID)
 			tx.Exec(`INSERT INTO
 				workbench_zones_actors ("ZoneID", "ActorID")
 				VALUES ($1, $2)`, za.ZoneID, za.ActorID)
