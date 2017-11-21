@@ -113,8 +113,7 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 				}
 				_, err = tx.Exec(`
 					INSERT INTO workbench_triggers ("ProjectID", "ZoneID", "TriggerType", "AlwaysExec")
-					VALUES ($1, $2, $3, $4)
-					RETURNING "ID"`, project.ID, zone.ID, trigger.TriggerType, execPrepared)
+					VALUES ($1, $2, $3, $4)`, project.ID, zone.ID, trigger.TriggerType, execPrepared)
 				if err != nil {
 					myerrors.ServerError(w, r, err)
 					return
