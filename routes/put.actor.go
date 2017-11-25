@@ -91,63 +91,77 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 	generatedIDs := map[string]uint64{}
 
 	for _, dialog := range actor.Dialogs {
-		dialog.ActorID = actorID
-		// Creating a new dialog
-		if dialog.CreateID != nil {
-			var newID uint64
-
-			// Default IsRoot values for the dialog
-			if dialog.IsRoot == nil {
-				v := false
-				dialog.IsRoot = &v
-			}
-
-			// Prepare these values for the SQL query
-			dEntryInput, err := dialog.EntryInput.Value()
-			if err != nil {
-				myerrors.ServerError(w, r, err)
-				return
-			}
-			dAlwaysExec, err := dialog.AlwaysExec.Value()
-			if err != nil {
-				myerrors.ServerError(w, r, err)
-				return
-			}
-			dStatements, err := dialog.Statements.Value()
-			if err != nil {
-				myerrors.ServerError(w, r, err)
-				return
-			}
-
-			err = tx.QueryRow(`INSERT INTO 
-			workbench_dialog_nodes ("ActorID", "EntryInput", "AlwaysExec", "Statements", "IsRoot")
-			VALUES ($1, $2, $3, $4, $5) RETURNING "ID"`, dialog.ActorID, dEntryInput, dAlwaysExec, dStatements, *dialog.IsRoot).Scan(&newID)
-			if err != nil {
-				myerrors.ServerError(w, r, err)
-				return
-			}
-			generatedIDs[*dialog.CreateID] = newID
+		if dialog.PatchAction == nil {
 			continue
-		} else {
-			entry, err := dialog.EntryInput.Value()
-			if err != nil {
-				myerrors.ServerError(w, r, err)
-				return
+		}
+
+		switch *dialog.PatchAction {
+		case models.PatchActionCreate:
+			dialog.ActorID = actorID
+			// Creating a new dialog
+			if dialog.CreateID != nil {
+				var newID uint64
+
+				// Default IsRoot values for the dialog
+				if dialog.IsRoot == nil {
+					v := false
+					dialog.IsRoot = &v
+				}
+
+				// Prepare these values for the SQL query
+				dEntryInput, err := dialog.EntryInput.Value()
+				if err != nil {
+					myerrors.ServerError(w, r, err)
+					return
+				}
+				dAlwaysExec, err := dialog.AlwaysExec.Value()
+				if err != nil {
+					myerrors.ServerError(w, r, err)
+					return
+				}
+				dStatements, err := dialog.Statements.Value()
+				if err != nil {
+					myerrors.ServerError(w, r, err)
+					return
+				}
+
+				err = tx.QueryRow(`INSERT INTO 
+				workbench_dialog_nodes ("ActorID", "EntryInput", "AlwaysExec", "Statements", "IsRoot")
+				VALUES ($1, $2, $3, $4, $5) RETURNING "ID"`, dialog.ActorID, dEntryInput, dAlwaysExec, dStatements, *dialog.IsRoot).Scan(&newID)
+				if err != nil {
+					myerrors.ServerError(w, r, err)
+					return
+				}
+				generatedIDs[*dialog.CreateID] = newID
+				continue
+			} else {
+				entry, err := dialog.EntryInput.Value()
+				if err != nil {
+					myerrors.ServerError(w, r, err)
+					return
+				}
+				always, err := json.Marshal(dialog.AlwaysExec)
+				if err != nil {
+					myerrors.ServerError(w, r, err)
+					return
+				}
+				tx.MustExec(`
+					UPDATE workbench_dialog_nodes
+					SET "EntryInput"=$1, "AlwaysExec"=$2
+					WHERE "ID"=$3
+				`, entry, always, dialog.ID)
+				if err != nil {
+					myerrors.ServerError(w, r, err)
+					return
+				}
 			}
-			always, err := json.Marshal(dialog.AlwaysExec)
-			if err != nil {
-				myerrors.ServerError(w, r, err)
-				return
-			}
-			tx.MustExec(`
-				UPDATE workbench_dialog_nodes
-				SET "EntryInput"=$1, "AlwaysExec"=$2
-				WHERE "ID"=$3
-			`, entry, always, dialog.ID)
-			if err != nil {
-				myerrors.ServerError(w, r, err)
-				return
-			}
+		case models.PatchActionDelete:
+			tx.Exec(`DELETE FROM
+				workbench_dialog_nodes_relations
+				WHERE "ParentNodeID"=$1 OR "ChildNodeID"=$1`, dialog.ID)
+			tx.Exec(`DELETE FROM
+				workbench_dialog_nodes
+				WHERE "ID"=$1`, dialog.ID)
 		}
 	}
 
