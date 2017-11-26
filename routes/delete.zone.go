@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 
@@ -51,7 +50,6 @@ func deleteZoneHandler(w http.ResponseWriter, r *http.Request) {
 
 	token, err := utilities.ParseJTWClaims(w.Header().Get("x-token"))
 	tknData := token["data"].(map[string]interface{})
-	log.Println(tknData)
 
 	member := &models.TeamMember{}
 	err = db.DBMap.SelectOne(member, `

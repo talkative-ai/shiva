@@ -94,12 +94,12 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			if trigger.PatchAction != nil && *trigger.PatchAction == models.PatchActionDelete {
+			if *trigger.PatchAction == models.PatchActionDelete {
 				tx.Exec(`DELETE FROM workbench_triggers WHERE "ProjectID"=$1 AND "TriggerType"=$2`, project.ID, trigger.TriggerType)
 				continue
 			}
 
-			if trigger.PatchAction != nil && *trigger.PatchAction == models.PatchActionCreate {
+			if *trigger.PatchAction == models.PatchActionCreate {
 				trigger.TriggerType = t
 				switch v := trigger.ZoneID.(type) {
 				// If the ZoneID is a string, then this is a CreateID
@@ -119,6 +119,20 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 				w.WriteHeader(http.StatusCreated)
+				continue
+			}
+
+			if *trigger.PatchAction == models.PatchActionUpdate {
+				execPrepared, err := trigger.AlwaysExec.Value()
+				if err != nil {
+					myerrors.ServerError(w, r, err)
+					return
+				}
+				_, err = tx.Exec(`
+					UPDATE workbench_triggers
+					SET "AlwaysExec" = $1
+					WHERE "ProjectID" = $2 AND "ZoneID" = $3 AND "TriggerType" = $4`,
+					execPrepared, projectID, trigger.ZoneID, t)
 				continue
 			}
 		}

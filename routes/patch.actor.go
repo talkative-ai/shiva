@@ -15,14 +15,14 @@ import (
 	"github.com/artificial-universe-maker/core/prehandle"
 )
 
-// PutActor router.Route
+// PatchActor router.Route
 // Path: "/actor/{id}",
 // Method: "PATCH",
 // Accepts models.TokenValidate
 // Responds with status of success or failure
-var PutActor = &router.Route{
+var PatchActor = &router.Route{
 	Path:       "/workbench/v1/actor/{id:[0-9]+}",
-	Method:     "PUT",
+	Method:     "PATCH",
 	Handler:    http.HandlerFunc(putActorHandler),
 	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.JWT, prehandle.RequireBody(65535)},
 }
@@ -134,26 +134,6 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 				}
 				generatedIDs[*dialog.CreateID] = newID
 				continue
-			} else {
-				entry, err := dialog.EntryInput.Value()
-				if err != nil {
-					myerrors.ServerError(w, r, err)
-					return
-				}
-				always, err := json.Marshal(dialog.AlwaysExec)
-				if err != nil {
-					myerrors.ServerError(w, r, err)
-					return
-				}
-				tx.MustExec(`
-					UPDATE workbench_dialog_nodes
-					SET "EntryInput"=$1, "AlwaysExec"=$2
-					WHERE "ID"=$3
-				`, entry, always, dialog.ID)
-				if err != nil {
-					myerrors.ServerError(w, r, err)
-					return
-				}
 			}
 		case models.PatchActionDelete:
 			tx.Exec(`DELETE FROM
@@ -162,6 +142,28 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 			tx.Exec(`DELETE FROM
 				workbench_dialog_nodes
 				WHERE "ID"=$1`, dialog.ID)
+		case models.PatchActionUpdate:
+			dEntryInput, err := dialog.EntryInput.Value()
+			if err != nil {
+				myerrors.ServerError(w, r, err)
+				return
+			}
+			dAlwaysExec, err := dialog.AlwaysExec.Value()
+			if err != nil {
+				myerrors.ServerError(w, r, err)
+				return
+			}
+			dStatements, err := dialog.Statements.Value()
+			if err != nil {
+				myerrors.ServerError(w, r, err)
+				return
+			}
+
+			tx.Exec(`
+				UPDATE workbench_dialog_nodes
+				SET "EntryInput" = $1, "AlwaysExec" = $2, "Statements" = $3, "IsRoot" = $4
+				WHERE "ID"=$5 AND "ActorID"=$6
+				`, dEntryInput, dAlwaysExec, dStatements, *dialog.IsRoot, dialog.ID, actorID)
 		}
 	}
 

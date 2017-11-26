@@ -3,7 +3,6 @@ package routes
 import (
 	"fmt"
 	"net/http"
-	"net/http/httputil"
 
 	"github.com/artificial-universe-maker/core/prehandle"
 	"github.com/artificial-universe-maker/core/router"
@@ -22,11 +21,5 @@ var GetIndex = &router.Route{
 }
 
 func getIndexHandler(w http.ResponseWriter, r *http.Request) {
-	bs, err := httputil.DumpRequest(r, true)
-	if err != nil {
-		fmt.Println("Error", err)
-	}
-	fmt.Println(string(bs))
-	fmt.Fprintf(w, "Want to help us build this api and more? Email us: dev@aum.ai")
-
+	fmt.Fprintf(w, "Want to help us build this api and more? Email us: info@aum.ai")
 }

@@ -36,7 +36,7 @@ func main() {
 	doRoute(r, routes.GetProjectMetadata)
 	doRoute(r, routes.GetActor)
 	doRoute(r, routes.GetZone)
-	doRoute(r, routes.PutActor)
+	doRoute(r, routes.PatchActor)
 	doRoute(r, routes.PatchProject)
 
 	doRoute(r, routes.DeleteActor)
