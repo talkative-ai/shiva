@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"strconv"
 
 	utilities "github.com/artificial-universe-maker/core"
 	"github.com/artificial-universe-maker/core/db"
@@ -12,6 +11,7 @@ import (
 	"github.com/artificial-universe-maker/core/myerrors"
 	"github.com/artificial-universe-maker/core/prehandle"
 	"github.com/artificial-universe-maker/core/router"
+	uuid "github.com/artificial-universe-maker/go.uuid"
 
 	"github.com/gorilla/mux"
 )
@@ -22,7 +22,7 @@ import (
 // Accepts models.TokenValidate
 // Responds with the project data
 var GetProject = &router.Route{
-	Path:       "/workbench/v1/project/{id:[0-9]+}",
+	Path:       "/workbench/v1/project/{id:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}}",
 	Method:     "GET",
 	Handler:    http.HandlerFunc(getProjectHandler),
 	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.JWT},
@@ -32,7 +32,7 @@ func getProjectHandler(w http.ResponseWriter, r *http.Request) {
 
 	urlparams := mux.Vars(r)
 
-	id, err := strconv.ParseInt(urlparams["id"], 10, 64)
+	id, err := uuid.FromString(urlparams["id"])
 	if err != nil {
 		myerrors.Respond(w, &myerrors.MySimpleError{
 			Code:    http.StatusBadRequest,

@@ -12,6 +12,7 @@ import (
 	"github.com/artificial-universe-maker/core/myerrors"
 	"github.com/artificial-universe-maker/core/prehandle"
 	"github.com/artificial-universe-maker/core/router"
+	uuid "github.com/artificial-universe-maker/go.uuid"
 )
 
 // PostProject router.Route
@@ -100,7 +101,7 @@ func postProjectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var newID uint64
+	var newID uuid.UUID
 	err = db.Instance.QueryRow(`INSERT INTO workbench_projects ("Title", "TeamID") VALUES ($1, $2) RETURNING "ID"`, project.Title, team.TeamID).Scan(&newID)
 	if err != nil {
 		myerrors.ServerError(w, r, err)

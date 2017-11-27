@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	utilities "github.com/artificial-universe-maker/core"
 	"github.com/artificial-universe-maker/core/db"
 	"github.com/artificial-universe-maker/core/models"
 	"github.com/artificial-universe-maker/core/myerrors"
 	"github.com/artificial-universe-maker/core/router"
+	uuid "github.com/artificial-universe-maker/go.uuid"
 	"github.com/gorilla/mux"
 
 	"github.com/artificial-universe-maker/core/prehandle"
@@ -25,7 +25,7 @@ import (
 	In order to update existing entities, use a Put{Entity} endpoint.
 **/
 var PatchProject = &router.Route{
-	Path:       "/workbench/v1/project/{id:[0-9]+}",
+	Path:       "/workbench/v1/project/{id:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}}",
 	Method:     "PATCH",
 	Handler:    http.HandlerFunc(patchProjectsHandler),
 	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.JWT, prehandle.RequireBody(65535)},
@@ -34,8 +34,7 @@ var PatchProject = &router.Route{
 func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 
 	urlparams := mux.Vars(r)
-
-	projectID, err := strconv.ParseUint(urlparams["id"], 10, 64)
+	projectID, err := uuid.FromString(urlparams["id"])
 	if err != nil {
 		myerrors.Respond(w, &myerrors.MySimpleError{
 			Code:    http.StatusBadRequest,
@@ -74,11 +73,11 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 
 	tx := db.Instance.MustBegin()
 
-	generatedIDs := map[string]uint64{}
+	generatedIDs := map[string]uuid.UUID{}
 
 	for _, zone := range project.Zones {
 		if zone.CreateID != nil {
-			var newID uint64
+			var newID uuid.UUID
 			err = tx.QueryRow(`INSERT INTO workbench_zones ("ProjectID", "Title") VALUES ($1, $2) RETURNING "ID"`, projectID, zone.Title).Scan(&newID)
 			if err != nil {
 				myerrors.ServerError(w, r, err)
@@ -101,10 +100,8 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 
 			if *trigger.PatchAction == models.PatchActionCreate {
 				trigger.TriggerType = t
-				switch v := trigger.ZoneID.(type) {
-				// If the ZoneID is a string, then this is a CreateID
-				case string:
-					trigger.ZoneID = generatedIDs[v]
+				if trigger.ZoneID.CreateID != nil {
+					trigger.ZoneID.UUID = generatedIDs[*trigger.ZoneID.CreateID]
 				}
 				execPrepared, err := trigger.AlwaysExec.Value()
 				if err != nil {
@@ -140,7 +137,7 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 
 	for _, actor := range project.Actors {
 		if actor.CreateID != nil {
-			var newID uint64
+			var newID uuid.UUID
 			err = tx.QueryRow(`INSERT INTO workbench_actors ("ProjectID", "Title") VALUES ($1, $2) RETURNING "ID"`, projectID, actor.Title).Scan(&newID)
 			if err != nil {
 				myerrors.ServerError(w, r, err)
@@ -157,15 +154,11 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		switch v := za.ActorID.(type) {
-		// If the ActorID is a string, then this is a CreateID
-		case string:
-			za.ActorID = generatedIDs[v]
+		if za.ZoneID.CreateID != nil {
+			za.ZoneID.UUID = generatedIDs[*za.ZoneID.CreateID]
 		}
-		switch v := za.ZoneID.(type) {
-		// If the ZoneID is a string, then this is a CreateID
-		case string:
-			za.ZoneID = generatedIDs[v]
+		if za.ActorID.CreateID != nil {
+			za.ActorID.UUID = generatedIDs[*za.ActorID.CreateID]
 		}
 
 		switch *za.PatchAction {

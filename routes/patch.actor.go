@@ -3,13 +3,13 @@ package routes
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	utilities "github.com/artificial-universe-maker/core"
 	"github.com/artificial-universe-maker/core/db"
 	"github.com/artificial-universe-maker/core/models"
 	"github.com/artificial-universe-maker/core/myerrors"
 	"github.com/artificial-universe-maker/core/router"
+	uuid "github.com/artificial-universe-maker/go.uuid"
 	"github.com/gorilla/mux"
 
 	"github.com/artificial-universe-maker/core/prehandle"
@@ -21,7 +21,7 @@ import (
 // Accepts models.TokenValidate
 // Responds with status of success or failure
 var PatchActor = &router.Route{
-	Path:       "/workbench/v1/actor/{id:[0-9]+}",
+	Path:       "/workbench/v1/actor/{id:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}}",
 	Method:     "PATCH",
 	Handler:    http.HandlerFunc(putActorHandler),
 	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.JWT, prehandle.RequireBody(65535)},
@@ -31,7 +31,7 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 
 	urlparams := mux.Vars(r)
 
-	actorID, err := strconv.ParseUint(urlparams["id"], 10, 64)
+	actorID, err := uuid.FromString(urlparams["id"])
 	if err != nil {
 		myerrors.Respond(w, &myerrors.MySimpleError{
 			Code:    http.StatusBadRequest,
@@ -88,7 +88,7 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 	// Probably generalize validations across models
 	db.DBMap.Update(actor)
 
-	generatedIDs := map[string]uint64{}
+	generatedIDs := map[string]uuid.UUID{}
 
 	for _, dialog := range actor.Dialogs {
 		if dialog.PatchAction == nil {
@@ -100,7 +100,7 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 			dialog.ActorID = actorID
 			// Creating a new dialog
 			if dialog.CreateID != nil {
-				var newID uint64
+				var newID uuid.UUID
 
 				// Default IsRoot values for the dialog
 				if dialog.IsRoot == nil {
@@ -172,15 +172,11 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		switch v := relation.ParentNodeID.(type) {
-		// If the ParentNodeID is a string, then this is a CreateID
-		case string:
-			relation.ParentNodeID = generatedIDs[v]
+		if relation.ChildNodeID.CreateID != nil {
+			relation.ChildNodeID.UUID = generatedIDs[*relation.ChildNodeID.CreateID]
 		}
-		switch v := relation.ChildNodeID.(type) {
-		// If the ChildNodeID is a string, then this is a CreateID
-		case string:
-			relation.ChildNodeID = generatedIDs[v]
+		if relation.ParentNodeID.CreateID != nil {
+			relation.ParentNodeID.UUID = generatedIDs[*relation.ParentNodeID.CreateID]
 		}
 
 		switch *relation.PatchAction {

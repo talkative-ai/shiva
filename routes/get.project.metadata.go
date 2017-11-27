@@ -15,6 +15,7 @@ import (
 	"github.com/artificial-universe-maker/core/prehandle"
 	"github.com/artificial-universe-maker/core/providers"
 	"github.com/artificial-universe-maker/core/router"
+	uuid "github.com/artificial-universe-maker/go.uuid"
 
 	"github.com/gorilla/mux"
 )
@@ -25,7 +26,7 @@ import (
 // Accepts models.TokenValidate
 // Responds with the project data
 var GetProjectMetadata = &router.Route{
-	Path:       "/workbench/v1/project/{id:[0-9]+}/metadata",
+	Path:       "/workbench/v1/project/{id:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}}/metadata",
 	Method:     "GET",
 	Handler:    http.HandlerFunc(getProjectMetadataHandler),
 	Prehandler: []prehandle.Prehandler{prehandle.SetJSON, prehandle.JWT},
@@ -35,7 +36,7 @@ func getProjectMetadataHandler(w http.ResponseWriter, r *http.Request) {
 
 	urlparams := mux.Vars(r)
 
-	id, err := strconv.ParseUint(urlparams["id"], 10, 64)
+	id, err := uuid.FromString(urlparams["id"])
 	if err != nil {
 		myerrors.Respond(w, &myerrors.MySimpleError{
 			Code:    http.StatusBadRequest,
@@ -86,8 +87,8 @@ func getProjectMetadataHandler(w http.ResponseWriter, r *http.Request) {
 		PublishTime time.Time
 	}
 
-	status := redis.Get(fmt.Sprintf("%v:%v", models.KeynavProjectMetadataStatic(id), "status")).Val()
-	pubtime := redis.Get(fmt.Sprintf("%v:%v", models.KeynavProjectMetadataStatic(id), "pubtime")).Val()
+	status := redis.Get(fmt.Sprintf("%v:%v", models.KeynavProjectMetadataStatic(id.String()), "status")).Val()
+	pubtime := redis.Get(fmt.Sprintf("%v:%v", models.KeynavProjectMetadataStatic(id.String()), "pubtime")).Val()
 
 	statusNum, err := strconv.ParseInt(status, 10, 8)
 	pubtimeNum, err := strconv.ParseInt(pubtime, 10, 64)
