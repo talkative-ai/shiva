@@ -51,7 +51,7 @@ func postPublishHandler(w http.ResponseWriter, r *http.Request) {
 		JOIN team_members AS t
 		ON t."TeamID"=p."TeamID" AND t."UserID"=$1
 		WHERE p."ID"=$2
-	`, tknData["user_id"], id.Bytes())
+	`, tknData["user_id"], id)
 	if member.Role != 1 || err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		return

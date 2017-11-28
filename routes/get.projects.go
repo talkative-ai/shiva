@@ -2,6 +2,7 @@ package routes
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	utilities "github.com/artificial-universe-maker/core"
@@ -9,6 +10,7 @@ import (
 	"github.com/artificial-universe-maker/core/models"
 	"github.com/artificial-universe-maker/core/myerrors"
 	"github.com/artificial-universe-maker/core/router"
+	uuid "github.com/artificial-universe-maker/go.uuid"
 
 	"github.com/artificial-universe-maker/core/prehandle"
 )
@@ -29,6 +31,17 @@ func getProjectsHandler(w http.ResponseWriter, r *http.Request) {
 
 	token, err := utilities.ParseJTWClaims(w.Header().Get("x-token"))
 	tknData := token["data"].(map[string]interface{})
+	userID, err := uuid.FromString(tknData["user_id"].(string))
+	if err != nil {
+		myerrors.Respond(w, &myerrors.MySimpleError{
+			Code:    http.StatusBadRequest,
+			Message: "bad_id",
+			Req:     r,
+		})
+		return
+	}
+
+	fmt.Println("UserID", userID.String())
 
 	// Validate project access
 	projects, err := db.DBMap.Select(&models.AumProject{}, `
@@ -36,7 +49,7 @@ func getProjectsHandler(w http.ResponseWriter, r *http.Request) {
 	JOIN team_members as m ON m."UserID"=$1
 	JOIN teams as t ON t."ID"=m."TeamID"
 	WHERE p."TeamID"=t."ID"
-	`, tknData["user_id"])
+	`, userID)
 	if err != nil {
 		myerrors.ServerError(w, r, err)
 		return
