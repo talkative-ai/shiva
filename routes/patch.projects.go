@@ -94,10 +94,11 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			w.WriteHeader(http.StatusCreated)
 			generatedIDs[*zone.CreateID] = newID
-			if proj.StartZoneID == uuid.Nil {
+			if !proj.StartZoneID.Valid {
 				updated := updateProjectStartZone(tx, newID, projectID)
 				if updated {
-					proj.StartZoneID = newID
+					proj.StartZoneID.UUID = newID
+					proj.StartZoneID.Valid = true
 				}
 			}
 		}
@@ -183,7 +184,7 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	updateProjectStartZone(tx, project.StartZoneID, projectID)
+	updateProjectStartZone(tx, project.StartZoneID.UUID, projectID)
 
 	err = tx.Commit()
 	if err != nil {
