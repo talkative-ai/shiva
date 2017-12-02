@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/jmoiron/sqlx"
+
 	utilities "github.com/artificial-universe-maker/core"
 	"github.com/artificial-universe-maker/core/db"
 	"github.com/artificial-universe-maker/core/models"
@@ -61,6 +63,13 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	proj := &models.AumProject{}
+	db.DBMap.SelectOne(proj, `
+		SELECT "StartZoneID"
+		FROM workbench_projects
+		WHERE "ID"=$1
+		`, projectID)
+
 	project := new(models.AumProject)
 
 	err = json.Unmarshal([]byte(r.Header.Get("x-body")), project)
@@ -85,7 +94,12 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			w.WriteHeader(http.StatusCreated)
 			generatedIDs[*zone.CreateID] = newID
-			continue
+			if proj.StartZoneID == uuid.Nil {
+				updated := updateProjectStartZone(tx, newID, projectID)
+				if updated {
+					proj.StartZoneID = newID
+				}
+			}
 		}
 		for t, trigger := range zone.Triggers {
 
@@ -95,7 +109,6 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 
 			if *trigger.PatchAction == models.PatchActionDelete {
 				tx.Exec(`DELETE FROM workbench_triggers WHERE "ProjectID"=$1 AND "TriggerType"=$2`, project.ID, trigger.TriggerType)
-				continue
 			}
 
 			if *trigger.PatchAction == models.PatchActionCreate {
@@ -116,7 +129,6 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 				w.WriteHeader(http.StatusCreated)
-				continue
 			}
 
 			if *trigger.PatchAction == models.PatchActionUpdate {
@@ -130,7 +142,6 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 					SET "AlwaysExec" = $1
 					WHERE "ProjectID" = $2 AND "ZoneID" = $3 AND "TriggerType" = $4`,
 					execPrepared, projectID, trigger.ZoneID, t)
-				continue
 			}
 		}
 	}
@@ -172,6 +183,8 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	updateProjectStartZone(tx, project.StartZoneID, projectID)
+
 	err = tx.Commit()
 	if err != nil {
 		myerrors.ServerError(w, r, err)
@@ -185,4 +198,25 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintln(w, string(resp))
+}
+
+func updateProjectStartZone(context *sqlx.Tx, StartZoneID, projectID uuid.UUID) bool {
+	if StartZoneID == uuid.Nil {
+		return false
+	}
+	var count int
+	context.QueryRow(`
+			SELECT COUNT(*) FROM workbench_zones
+			WHERE "ID"=$1 AND "ProjectID"=$2`,
+		StartZoneID, projectID).Scan(&count)
+	if count <= 0 {
+		return false
+	}
+	context.Exec(`
+		UPDATE workbench_projects
+		SET "StartZoneID"=$1
+		WHERE "ID"=$2
+		`, StartZoneID, projectID)
+
+	return true
 }
