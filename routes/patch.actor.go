@@ -102,12 +102,6 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 			if dialog.CreateID != nil {
 				var newID uuid.UUID
 
-				// Default IsRoot values for the dialog
-				if dialog.IsRoot == nil {
-					v := false
-					dialog.IsRoot = &v
-				}
-
 				// Prepare these values for the SQL query
 				dEntryInput, err := dialog.EntryInput.Value()
 				if err != nil {
@@ -127,7 +121,7 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 
 				err = tx.QueryRow(`INSERT INTO 
 				workbench_dialog_nodes ("ActorID", "EntryInput", "AlwaysExec", "Statements", "IsRoot")
-				VALUES ($1, $2, $3, $4, $5) RETURNING "ID"`, dialog.ActorID, dEntryInput, dAlwaysExec, dStatements, *dialog.IsRoot).Scan(&newID)
+				VALUES ($1, $2, $3, $4, $5) RETURNING "ID"`, dialog.ActorID, dEntryInput, dAlwaysExec, dStatements, dialog.IsRoot).Scan(&newID)
 				if err != nil {
 					myerrors.ServerError(w, r, err)
 					return
@@ -159,11 +153,12 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
+			// TODO: Generalize this with reflection
 			tx.Exec(`
 				UPDATE workbench_dialog_nodes
-				SET "EntryInput" = $1, "AlwaysExec" = $2, "Statements" = $3, "IsRoot" = $4
-				WHERE "ID"=$5 AND "ActorID"=$6
-				`, dEntryInput, dAlwaysExec, dStatements, *dialog.IsRoot, dialog.ID, actorID)
+				SET "EntryInput" = $1, "AlwaysExec" = $2, "Statements" = $3, "IsRoot" = $4, "UnknownHandler" = $5
+				WHERE "ID"=$6 AND "ActorID"=$7
+				`, dEntryInput, dAlwaysExec, dStatements, dialog.IsRoot, dialog.UnknownHandler, dialog.ID, actorID)
 		}
 	}
 
