@@ -120,8 +120,8 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 				}
 
 				err = tx.QueryRow(`INSERT INTO 
-				workbench_dialog_nodes ("ActorID", "EntryInput", "AlwaysExec", "Statements", "IsRoot")
-				VALUES ($1, $2, $3, $4, $5) RETURNING "ID"`, dialog.ActorID, dEntryInput, dAlwaysExec, dStatements, dialog.IsRoot).Scan(&newID)
+				workbench_dialog_nodes ("ActorID", "EntryInput", "AlwaysExec", "Statements", "IsRoot", "UnknownHandler")
+				VALUES ($1, $2, $3, $4, $5, $6) RETURNING "ID"`, dialog.ActorID, dEntryInput, dAlwaysExec, dStatements, dialog.IsRoot, dialog.UnknownHandler).Scan(&newID)
 				if err != nil {
 					myerrors.ServerError(w, r, err)
 					return
