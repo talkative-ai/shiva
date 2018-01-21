@@ -13,6 +13,7 @@ import (
 	"github.com/artificial-universe-maker/core/models"
 	"github.com/artificial-universe-maker/core/myerrors"
 	"github.com/artificial-universe-maker/core/prehandle"
+	"github.com/artificial-universe-maker/core/redis"
 	"github.com/artificial-universe-maker/core/router"
 	jwt "github.com/dgrijalva/jwt-go"
 	auth "google.golang.org/api/oauth2/v2"
@@ -57,6 +58,16 @@ func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newUser := false
+
+	// Check to see if the user is whitelisted
+	if whitelisted := redis.Instance.SIsMember("whitelist", tokenInfo.Email).Val(); !whitelisted {
+		myerrors.Respond(w, &myerrors.MySimpleError{
+			Code:    http.StatusBadRequest,
+			Req:     r,
+			Message: "not_whitelisted",
+		})
+		return
+	}
 
 	// Check to see if the user exists
 	user := &models.User{}
