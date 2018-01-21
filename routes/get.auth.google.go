@@ -56,7 +56,6 @@ func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = db.InitializeDB()
 	newUser := false
 
 	// Check to see if the user exists

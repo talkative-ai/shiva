@@ -13,7 +13,7 @@ import (
 	"github.com/artificial-universe-maker/core/models"
 	"github.com/artificial-universe-maker/core/myerrors"
 	"github.com/artificial-universe-maker/core/prehandle"
-	"github.com/artificial-universe-maker/core/providers"
+	"github.com/artificial-universe-maker/core/redis"
 	"github.com/artificial-universe-maker/core/router"
 	uuid "github.com/artificial-universe-maker/go.uuid"
 
@@ -71,24 +71,13 @@ func getProjectMetadataHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	redis, err := providers.ConnectRedis()
-	if err != nil {
-		myerrors.Respond(w, &myerrors.MySimpleError{
-			Code: http.StatusInternalServerError,
-			Log:  err.Error(),
-			Req:  r,
-		})
-		return
-	}
-	defer redis.Close()
-
 	type ProjectMetadata struct {
 		Status      models.PublishStatus
 		PublishTime time.Time
 	}
 
-	status := redis.Get(fmt.Sprintf("%v:%v", models.KeynavProjectMetadataStatic(id.String()), "status")).Val()
-	pubtime := redis.Get(fmt.Sprintf("%v:%v", models.KeynavProjectMetadataStatic(id.String()), "pubtime")).Val()
+	status := redis.Instance.Get(fmt.Sprintf("%v:%v", models.KeynavProjectMetadataStatic(id.String()), "status")).Val()
+	pubtime := redis.Instance.Get(fmt.Sprintf("%v:%v", models.KeynavProjectMetadataStatic(id.String()), "pubtime")).Val()
 
 	statusNum, err := strconv.ParseInt(status, 10, 8)
 	pubtimeNum, err := strconv.ParseInt(pubtime, 10, 64)

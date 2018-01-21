@@ -2,7 +2,6 @@ package routes
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	utilities "github.com/artificial-universe-maker/core"
@@ -40,8 +39,6 @@ func getProjectsHandler(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-
-	fmt.Println("UserID", userID.String())
 
 	// Validate project access
 	projects, err := db.DBMap.Select(&models.AumProject{}, `
