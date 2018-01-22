@@ -1,7 +1,10 @@
 package routes
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -132,6 +135,12 @@ func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}
 
-	json.NewEncoder(w).Encode(*user)
+	mac := hmac.New(sha256.New, []byte(os.Getenv("INTERCOM_SECRET")))
+	mac.Write([]byte(user.Email))
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"IntercomHMAC": hex.EncodeToString(mac.Sum(nil)),
+		"User":         user,
+	})
 
 }
