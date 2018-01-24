@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -90,6 +91,7 @@ func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 			err != nil ||
 			user.FamilyName == "" ||
 			len(user.FamilyName) > 50 {
+			fmt.Printf("Invalid family name: %v\n", user.FamilyName)
 			myerrors.Respond(w, &myerrors.MySimpleError{
 				Code:    http.StatusBadRequest,
 				Req:     r,
@@ -101,6 +103,7 @@ func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 			err != nil ||
 			user.GivenName == "" ||
 			len(user.GivenName) > 50 {
+			fmt.Printf("Invalid given name: %v\n", user.GivenName)
 			myerrors.Respond(w, &myerrors.MySimpleError{
 				Code:    http.StatusBadRequest,
 				Req:     r,
