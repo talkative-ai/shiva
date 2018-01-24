@@ -87,11 +87,11 @@ func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 		user.Email = tokenInfo.Email
 		user.GivenName = r.FormValue("gn")
 		user.FamilyName = r.FormValue("fn")
-		if match, err := regexp.MatchString(`\W`, user.FamilyName); match == true ||
+		if match, err := regexp.MatchString(`[^\w\s\.]|\d`, user.FamilyName); match == true ||
 			err != nil ||
 			user.FamilyName == "" ||
 			len(user.FamilyName) > 50 {
-			fmt.Printf("Invalid family name: %v\n", user.FamilyName)
+			fmt.Printf("Invalid family name: %v, %v\n", err, user.FamilyName)
 			myerrors.Respond(w, &myerrors.MySimpleError{
 				Code:    http.StatusBadRequest,
 				Req:     r,
@@ -99,11 +99,11 @@ func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
-		if match, err := regexp.MatchString(`\W`, user.GivenName); match == true ||
+		if match, err := regexp.MatchString(`[^\w\s\.]|\d`, user.GivenName); match == true ||
 			err != nil ||
 			user.GivenName == "" ||
 			len(user.GivenName) > 50 {
-			fmt.Printf("Invalid given name: %v\n", user.GivenName)
+			fmt.Printf("Invalid given name: %v, %v\n", err, user.GivenName)
 			myerrors.Respond(w, &myerrors.MySimpleError{
 				Code:    http.StatusBadRequest,
 				Req:     r,
