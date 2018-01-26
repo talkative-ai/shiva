@@ -1,9 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
+	"github.com/artificial-universe-maker/core/db"
+	"github.com/artificial-universe-maker/core/redis"
 	"github.com/artificial-universe-maker/core/router"
 	"github.com/artificial-universe-maker/shiva/routes"
 	mux "github.com/gorilla/mux"
@@ -11,6 +14,22 @@ import (
 )
 
 func main() {
+
+	// Initialize database and redis connections
+	// TODO: Make it a bit clearer that this is happening, and more maintainable
+	err := db.InitializeDB()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer db.Instance.Close()
+
+	_, err = redis.ConnectRedis()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer redis.Instance.Close()
 
 	r := mux.NewRouter()
 	router.ApplyRoute(r, routes.GetIndex)
