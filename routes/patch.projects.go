@@ -186,6 +186,22 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 
 	updateProjectStartZone(tx, project.StartZoneID.UUID, projectID)
 
+	if project.Tags != nil {
+		tags, _ := project.Tags.Value()
+		_, err = tx.Exec(`
+			UPDATE workbench_projects
+			SET "Tags"=$1
+			WHERE "ID"=$2
+			`, tags, projectID)
+	}
+	if project.Category != nil {
+		_, err = tx.Exec(`
+			UPDATE workbench_projects
+			SET "Category"=$1
+			WHERE "ID"=$2
+			`, project.Category, projectID)
+	}
+
 	err = tx.Commit()
 	if err != nil {
 		myerrors.ServerError(w, r, err)
