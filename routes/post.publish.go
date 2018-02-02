@@ -57,7 +57,7 @@ func postPublishHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rq, err := http.NewRequest("GET", fmt.Sprintf("http://lakshmi:8080/?project-id=%v", urlparams["id"]), nil)
+	rq, err := http.NewRequest("POST", fmt.Sprintf("http://lakshmi:8080/v1/submit/%v", urlparams["id"]), nil)
 	if err != nil {
 		myerrors.ServerError(w, r, err)
 	}
