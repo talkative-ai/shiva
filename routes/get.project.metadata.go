@@ -73,6 +73,7 @@ func getProjectMetadataHandler(w http.ResponseWriter, r *http.Request) {
 
 	type ProjectMetadata struct {
 		Status      models.PublishStatus
+		Review      *models.ProjectReviewPublic
 		PublishTime time.Time
 	}
 
@@ -86,6 +87,22 @@ func getProjectMetadataHandler(w http.ResponseWriter, r *http.Request) {
 	metadata := &ProjectMetadata{
 		Status:      models.PublishStatus(statusNum),
 		PublishTime: pubtimeParsed,
+	}
+
+	if metadata.Status == models.PublishStatusDenied {
+		metadata.Review = &models.ProjectReviewPublic{}
+		err = db.DBMap.SelectOne(metadata.Review, `
+			SELECT
+				"BadTitle", "MajorProblems", "MinorProblems", "ProblemWith", "Dialogues"
+			FROM project_review_results
+			WHERE "ProjectID"=$1
+			ORDER BY "ReviewedAt" DESC
+			LIMIT 1
+		`, id.String())
+		if err != nil {
+			myerrors.ServerError(w, r, err)
+			return
+		}
 	}
 
 	json.NewEncoder(w).Encode(metadata)
