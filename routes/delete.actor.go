@@ -17,9 +17,8 @@ import (
 )
 
 // DeleteActor router.Route
-// Path: "/actor/{id}",
-// Method: "GET",
-// Accepts models.TokenValidate
+// Path: "/actor/{id}"
+// Method: "DELETE"
 // Responds with the actor data
 var DeleteActor = &router.Route{
 	Path:       "/workbench/v1/actor/{id:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}}",

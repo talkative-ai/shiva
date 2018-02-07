@@ -16,10 +16,11 @@ import (
 )
 
 // PostPublish router.Route
-// Path: "/publish",
-// Method: "POST",
-// Accepts models.UserRegister
-// Responds with status of success or failure
+/* Path: "/publish",
+ * Method: "POST",
+ * Accepts models.UserRegister
+ * Responds with status of success or failure
+ */
 var PostPublish = &router.Route{
 	Path:       "/workbench/v1/publish/{id:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}}",
 	Method:     "POST",

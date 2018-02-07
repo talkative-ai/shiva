@@ -19,13 +19,16 @@ import (
 )
 
 // PatchProject router.Route
-// Path: "/user/register",
-// Method: "PATCH",
-// Accepts models.TokenValidate
-/**
-	PatchProject enables the creation of new entities within a project.
-	In order to update existing entities, use a Put{Entity} endpoint.
-**/
+/* Path: "/project/{id}",
+ * Method: "PATCH",
+ * Accepts models.TokenValidate
+ * Accepts a models.AumActor, including nested []models.Dialog and []models.DialogRelation.
+ * Responds with a map of generated IDs.
+ * 		One place that generated IDs comes into play is when multiple objects are created
+ *		on the frontend and related to each other in some way.
+ *		By enabling this without interfacing with the backend, the workbench can work offline as well
+ *		and save/sync when it gets to an internet connection.
+ */
 var PatchProject = &router.Route{
 	Path:       "/workbench/v1/project/{id:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}}",
 	Method:     "PATCH",

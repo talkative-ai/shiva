@@ -17,10 +17,10 @@ import (
 )
 
 // GetZone router.Route
-// Path: "/zone/{id}",
-// Method: "GET",
-// Accepts models.TokenValidate
-// Responds with the zone data
+/* Path: "/zone/{id}"
+ * Method: "GET"
+ * Responds with models.AumZone
+ */
 var GetZone = &router.Route{
 	Path:       "/workbench/v1/zone/{id:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}}",
 	Method:     "GET",

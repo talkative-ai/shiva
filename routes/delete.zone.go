@@ -15,9 +15,8 @@ import (
 )
 
 // DeleteZone router.Route
-// Path: "/zone/{id}",
-// Method: "GET",
-// Accepts models.TokenValidate
+// Path: "/zone/{id}"
+// Method: "GET"
 // Responds with the zone data
 var DeleteZone = &router.Route{
 	Path:       "/workbench/v1/zone/{id:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}}",

@@ -16,10 +16,11 @@ import (
 )
 
 // PostProject router.Route
-// Path: "/user/register",
-// Method: "POST",
-// Accepts models.TokenValidate
-// Responds with status of success or failure
+/* Path: "/project",
+ * Method: "POST",
+ * Accepts models.TokenValidate
+ * Responds with status of success or failure
+ */
 var PostProject = &router.Route{
 	Path:       "/workbench/v1/project",
 	Method:     "POST",

@@ -9,10 +9,10 @@ import (
 )
 
 // GetIndex router.Route
-// Path: "/user/register",
-// Method: "POST",
-// Accepts models.UserRegister
-// Responds with status of success or failure
+/* Path: "/"
+ * Method: "GET"
+ * Responds with status of success or failure
+ */
 var GetIndex = &router.Route{
 	Path:       "/workbench/v1/",
 	Method:     "GET",

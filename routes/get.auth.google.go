@@ -24,10 +24,12 @@ import (
 )
 
 // PostAuthGoogle router.Route
-// Path: "/workbench/v1/auth/google",
-// Method: "GET",
-// Validates a Google OAuth 2 token.
-// Responds with status of success or failure
+/* Path: "/workbench/v1/auth/google"
+ * Method: "GET"
+ * Validates a Google OAuth 2 token.
+ * Responds with a hashmap containing an intercom.io token
+ *		and models.User model
+ */
 var PostAuthGoogle = &router.Route{
 	Path:       "/workbench/v1/auth/google",
 	Method:     "GET",
@@ -37,14 +39,17 @@ var PostAuthGoogle = &router.Route{
 
 func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 
+	// Create a new Google Auth service
 	authService, err := auth.New(http.DefaultClient)
 	if err != nil {
 		myerrors.ServerError(w, r, err)
 		return
 	}
 
+	// Validate the token info on Google's servers
 	tokenInfo, err := authService.Tokeninfo().IdToken(r.FormValue("token")).Do()
 	if err != nil {
+		// If there's a problem, just assume it's unauthorized.
 		myerrors.Respond(w, &myerrors.MySimpleError{
 			Code: http.StatusUnauthorized,
 			Req:  r,
@@ -53,6 +58,7 @@ func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !tokenInfo.VerifiedEmail {
+		// If the email hasn't yet been verified, don't allow them access.
 		myerrors.Respond(w, &myerrors.MySimpleError{
 			Code:    http.StatusForbidden,
 			Req:     r,
@@ -61,9 +67,8 @@ func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newUser := false
-
 	// Check to see if the user is whitelisted
+	// This will be removed after the beta
 	if whitelisted := redis.Instance.SIsMember("whitelist", tokenInfo.Email).Val(); !whitelisted {
 		myerrors.Respond(w, &myerrors.MySimpleError{
 			Code:    http.StatusBadRequest,
@@ -73,20 +78,30 @@ func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Preparing to check if the user has ever signed into the workbench
+	newUser := false
+
 	// Check to see if the user exists
 	user := &models.User{}
 	err = db.DBMap.SelectOne(user, "SELECT * FROM users WHERE \"Email\"=$1", tokenInfo.Email)
 	if err != nil && err != sql.ErrNoRows {
+		// If there's an error and it's not that there are no rows
+		// Then there's something wonky going on and we'll just return it here.
 		myerrors.ServerError(w, r, err)
 		return
 	}
 
+	// Otherwise the user is a new user (does not yet exist in our database)
 	if err == sql.ErrNoRows {
-		// User does not exist. Create and initialize base team
 		newUser = true
+		// Store their details.
 		user.Email = tokenInfo.Email
 		user.GivenName = r.FormValue("gn")
 		user.FamilyName = r.FormValue("fn")
+
+		// If the name contains bogus characters, or is empty, or is huge, then don't accept it
+		// We want to make sure people are using normal names. This isn't Reddit.
+		// TODO: Support other languages and accented characters here.
 		if match, err := regexp.MatchString(`[^\w\s\.]|\d`, user.FamilyName); match == true ||
 			err != nil ||
 			user.FamilyName == "" ||
@@ -99,6 +114,9 @@ func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
+
+		// Same as above, but with the last name.
+		// TODO: Same as above
 		if match, err := regexp.MatchString(`[^\w\s\.]|\d`, user.GivenName); match == true ||
 			err != nil ||
 			user.GivenName == "" ||
@@ -111,12 +129,16 @@ func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
+
+		// Create and save the user
 		if err := db.CreateAndSaveUser(user); err != nil {
 			myerrors.ServerError(w, r, err)
 			return
 		}
 	}
 
+	// Generate their token
+	// TODO: Create a nice token struct
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"exp": time.Now().Add(time.Minute * 60 * 24 * 30).Unix(),
 		"data": map[string]interface{}{
@@ -124,23 +146,29 @@ func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 
+	// Sign the token and stringify
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_KEY")))
 	if err != nil {
 		log.Println("Error", err)
 		return
 	}
 
+	// Attach the JWT to the x-token header
 	w.Header().Set("x-token", tokenString)
 
 	if newUser {
+		// If it's a new user, then let them know
 		w.WriteHeader(http.StatusCreated)
 	} else {
+		// Otherwise just say OK
 		w.WriteHeader(http.StatusOK)
 	}
 
+	// Generate an Intercom token so that we can verify the user identity on intercom.io
 	mac := hmac.New(sha256.New, []byte(os.Getenv("INTERCOM_SECRET")))
 	mac.Write([]byte(user.Email))
 
+	// Pass all the data to the user
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"IntercomHMAC": hex.EncodeToString(mac.Sum(nil)),
 		"User":         user,

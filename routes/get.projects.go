@@ -15,10 +15,9 @@ import (
 )
 
 // GetProjects router.Route
-// Path: "/user/register",
-// Method: "GET",
-// Accepts models.TokenValidate
-// Responds with status of success or failure
+// Path: "/projects"
+// Method: "GET"
+// Responds with an array of projects
 var GetProjects = &router.Route{
 	Path:       "/workbench/v1/projects",
 	Method:     "GET",

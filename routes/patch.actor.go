@@ -16,10 +16,15 @@ import (
 )
 
 // PatchActor router.Route
-// Path: "/actor/{id}",
-// Method: "PATCH",
-// Accepts models.TokenValidate
-// Responds with status of success or failure
+/* Path: "/actor/{id}"
+ * Method: "PATCH"
+ * Accepts a models.AumActor, including nested []models.Dialog and []models.DialogRelation.
+ * Responds with a map of generated IDs.
+ * 		One place that generated IDs comes into play is when multiple objects are created
+ *		on the frontend and related to each other in some way.
+ *		By enabling this without interfacing with the backend, the workbench can work offline as well
+ *		and save/sync when it gets to an internet connection.
+ */
 var PatchActor = &router.Route{
 	Path:       "/workbench/v1/actor/{id:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}}",
 	Method:     "PATCH",
