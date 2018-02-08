@@ -2,7 +2,6 @@ package routes
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/jmoiron/sqlx"
@@ -38,6 +37,7 @@ var PatchProject = &router.Route{
 
 func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 
+	// Parse the project ID from the URL
 	urlparams := mux.Vars(r)
 	projectID, err := uuid.FromString(urlparams["id"])
 	if err != nil {
@@ -49,6 +49,7 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Parse the JWT data
 	token, err := utilities.ParseJTWClaims(w.Header().Get("x-token"))
 	tknData := token["data"].(map[string]interface{})
 
@@ -66,6 +67,9 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Fetching the start zone of the project
+	// This will be used later because if there's no StartZoneID
+	// then we set it to default to the first zone created
 	proj := &models.AumProject{}
 	db.DBMap.SelectOne(proj, `
 		SELECT "StartZoneID"
@@ -75,36 +79,55 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 
 	project := new(models.AumProject)
 
+	// Parse the frontend payload into the project model
 	err = json.Unmarshal([]byte(r.Header.Get("x-body")), project)
 	if err != nil {
 		myerrors.ServerError(w, r, err)
 		return
 	}
 
+	// Reset the projectID to the one we validated
+	// to prevent tampering
 	project.ID = projectID
 
+	// Create a transaction
 	tx := db.Instance.MustBegin()
 
+	// Prepare the generatedIDs map
+	// Entities on the frontend are created with temporary IDs.
+	// We use this map to communicate the entities' new permanent IDs.
 	generatedIDs := map[string]uuid.UUID{}
 
+	// First we update the project zones
 	for _, zone := range project.Zones {
+
+		// If the CreateID has a value, then the frontend has generated a temp
+		// ID for this zone, it's a new zone, and we need to insert it into the database
 		if zone.CreateID != nil {
 			var newID uuid.UUID
-			err = tx.QueryRow(`INSERT INTO workbench_zones ("ProjectID", "Title") VALUES ($1, $2) RETURNING "ID"`, projectID, zone.Title).Scan(&newID)
+			err = tx.QueryRow(`
+				INSERT INTO workbench_zones
+				("ProjectID", "Title")
+				VALUES ($1, $2)
+				RETURNING "ID"`, projectID, zone.Title).Scan(&newID)
 			if err != nil {
 				myerrors.ServerError(w, r, err)
 				return
 			}
 			w.WriteHeader(http.StatusCreated)
+
+			// Map the new ID to the old frontend temp ID
 			generatedIDs[*zone.CreateID] = newID
+
+			// If the StartZoneID for the project isn't set, default it to this zone.
+			// This is good UX when a user creates their first zone to the project.
 			if !proj.StartZoneID.Valid {
-				updated := updateProjectStartZone(tx, newID, projectID)
-				if updated {
-					proj.StartZoneID.UUID = newID
-					proj.StartZoneID.Valid = true
-				}
+				proj.StartZoneID.UUID = newID
+				proj.StartZoneID.Valid = true
 			}
 		}
+
+		// Updating the triggers within the zones
 		for t, trigger := range zone.Triggers {
 
 			if trigger.PatchAction == nil {
@@ -112,30 +135,45 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			if *trigger.PatchAction == models.PatchActionDelete {
-				tx.Exec(`DELETE FROM workbench_triggers WHERE "ProjectID"=$1 AND "TriggerType"=$2`, project.ID, trigger.TriggerType)
+				// Deleting the trigger
+				tx.Exec(`
+					DELETE FROM workbench_triggers
+					WHERE "ProjectID"=$1
+					AND "TriggerType"=$2`, project.ID, trigger.TriggerType)
+				continue
 			}
 
 			if *trigger.PatchAction == models.PatchActionCreate {
+				// Creating a new trigger
 				trigger.TriggerType = t
 				if trigger.ZoneID.CreateID != nil {
+					// The trigger was added to a zone that was created on the frontend but never stored on the backend
+					// therefore we need to update the ZoneID with the new permanent ID
 					trigger.ZoneID.UUID = generatedIDs[*trigger.ZoneID.CreateID]
 				}
+
+				// Prepare the non-standard model values to be stored in the database
 				execPrepared, err := trigger.AlwaysExec.Value()
 				if err != nil {
 					myerrors.ServerError(w, r, err)
 					return
 				}
+
+				// Store
 				_, err = tx.Exec(`
-					INSERT INTO workbench_triggers ("ProjectID", "ZoneID", "TriggerType", "AlwaysExec")
+					INSERT INTO workbench_triggers
+						("ProjectID", "ZoneID", "TriggerType", "AlwaysExec")
 					VALUES ($1, $2, $3, $4)`, project.ID, zone.ID, trigger.TriggerType, execPrepared)
 				if err != nil {
 					myerrors.ServerError(w, r, err)
 					return
 				}
 				w.WriteHeader(http.StatusCreated)
+				continue
 			}
 
 			if *trigger.PatchAction == models.PatchActionUpdate {
+				// Updating an existing trigger
 				execPrepared, err := trigger.AlwaysExec.Value()
 				if err != nil {
 					myerrors.ServerError(w, r, err)
@@ -146,49 +184,80 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 					SET "AlwaysExec" = $1
 					WHERE "ProjectID" = $2 AND "ZoneID" = $3 AND "TriggerType" = $4`,
 					execPrepared, projectID, trigger.ZoneID, t)
+				continue
 			}
 		}
 	}
 
+	// Updating the actors
 	for _, actor := range project.Actors {
+		// The only updating that will happen here is creating new actors.
+		// Updating existing actors actually happens in the patch.actor endpoint
 		if actor.CreateID != nil {
 			var newID uuid.UUID
-			err = tx.QueryRow(`INSERT INTO workbench_actors ("ProjectID", "Title") VALUES ($1, $2) RETURNING "ID"`, projectID, actor.Title).Scan(&newID)
+			// New actors have a CreateID set. Otherwise they already exist
+			// Store the new actor.
+			err = tx.QueryRow(`
+				INSERT INTO workbench_actors
+					("ProjectID", "Title")
+				VALUES ($1, $2) RETURNING "ID"`, projectID, actor.Title).Scan(&newID)
 			if err != nil {
 				myerrors.ServerError(w, r, err)
 				return
 			}
 			w.WriteHeader(http.StatusCreated)
+			// Mapping the old ID and the new ID
 			generatedIDs[*actor.CreateID] = newID
 			actor.ID = newID
 		}
 	}
 
+	// Updating the actors relationships to the zones
+	// In other words, adding or removing actors to zones
 	for _, za := range project.ZoneActors {
 		if za.PatchAction == nil {
 			continue
 		}
 
+		// If the zone didn't previously exist, then we need to update
+		// the zoneID here to the permanent one
 		if za.ZoneID.CreateID != nil {
 			za.ZoneID.UUID = generatedIDs[*za.ZoneID.CreateID]
 		}
+
+		// Same as above, but updating the ActorID to the permanent one if it was only just created
 		if za.ActorID.CreateID != nil {
 			za.ActorID.UUID = generatedIDs[*za.ActorID.CreateID]
 		}
 
 		switch *za.PatchAction {
 		case models.PatchActionCreate:
-			tx.Exec(`DELETE FROM workbench_zones_actors WHERE "ZoneID"=$1 AND "ActorID"=$2`, za.ZoneID, za.ActorID)
+			// The actor was added to the zone
+			// Delete any existing identical relations to ensure
+			// there's no duplicate entries in the DB
+			tx.Exec(`
+				DELETE FROM workbench_zones_actors
+				WHERE "ZoneID"=$1 AND "ActorID"=$2`, za.ZoneID, za.ActorID)
+
+			// Create the new relation into the DB
 			tx.Exec(`INSERT INTO
 				workbench_zones_actors ("ZoneID", "ActorID")
 				VALUES ($1, $2)`, za.ZoneID, za.ActorID)
 		case models.PatchActionDelete:
-			tx.Exec(`DELETE FROM workbench_zones_actors WHERE "ZoneID"=$1 AND "ActorID"=$2`, za.ZoneID, za.ActorID)
+			// The actor was removed from the zone
+			tx.Exec(`
+				DELETE FROM workbench_zones_actors
+				WHERE "ZoneID"=$1 AND "ActorID"=$2`, za.ZoneID, za.ActorID)
 		}
 	}
 
+	// We're updating the project start zone here
+	// TODO: Implement a better method to validate whether this is necessary
 	updateProjectStartZone(tx, project.StartZoneID.UUID, projectID)
 
+	// Updating the project tags
+	// TODO: Attach patch actions to this to avoid unnecessary queries?
+	// TODO: Input validation here
 	if project.Tags != nil {
 		tags, _ := project.Tags.Value()
 		_, err = tx.Exec(`
@@ -197,6 +266,9 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 			WHERE "ID"=$2
 			`, tags, projectID)
 	}
+
+	// Updating the project categories
+	// TODO: Input validation here. Also attach a patch action
 	if project.Category != nil {
 		_, err = tx.Exec(`
 			UPDATE workbench_projects
@@ -205,33 +277,37 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 			`, project.Category, projectID)
 	}
 
+	// Commit the update
 	err = tx.Commit()
 	if err != nil {
 		myerrors.ServerError(w, r, err)
 		return
 	}
 
-	resp, err := json.Marshal(generatedIDs)
-	if err != nil {
-		myerrors.ServerError(w, r, err)
-		return
-	}
-
-	fmt.Fprintln(w, string(resp))
+	// Send the new IDs list to the frontend to replace the old temp ones
+	json.NewEncoder(w).Encode(generatedIDs)
 }
 
+// This is a helper function for updating the project start zone
 func updateProjectStartZone(context *sqlx.Tx, StartZoneID, projectID uuid.UUID) bool {
+
+	// If the zone is Nil for some reason, then abort
 	if StartZoneID == uuid.Nil {
 		return false
 	}
+
+	// First validate that the zone exists in the project
 	var count int
 	context.QueryRow(`
 			SELECT COUNT(*) FROM workbench_zones
 			WHERE "ID"=$1 AND "ProjectID"=$2`,
 		StartZoneID, projectID).Scan(&count)
 	if count <= 0 {
+		// If not, then abort
 		return false
 	}
+
+	// Update the value on the project
 	context.Exec(`
 		UPDATE workbench_projects
 		SET "StartZoneID"=$1

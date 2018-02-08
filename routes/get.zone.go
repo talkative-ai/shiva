@@ -30,8 +30,8 @@ var GetZone = &router.Route{
 
 func getZoneHandler(w http.ResponseWriter, r *http.Request) {
 
+	// Parse the Zone ID from the URL
 	urlparams := mux.Vars(r)
-
 	id, err := uuid.FromString(urlparams["id"])
 	if err != nil {
 		myerrors.Respond(w, &myerrors.MySimpleError{
@@ -42,7 +42,7 @@ func getZoneHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fetch the zone
+	// Fetch the zone data
 	zone := &models.AumZone{}
 	err = db.DBMap.SelectOne(zone, `SELECT * FROM workbench_zones WHERE "ID"=$1`, id)
 	if err != nil {
@@ -51,10 +51,11 @@ func getZoneHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Parse the JWT data
 	token, err := utilities.ParseJTWClaims(w.Header().Get("x-token"))
 	tknData := token["data"].(map[string]interface{})
 
-	// Validate access
+	// Validate access to the project
 	member := &models.TeamMember{}
 	err = db.DBMap.SelectOne(member, `
 		SELECT t."Role"
@@ -68,13 +69,15 @@ func getZoneHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Fetch all triggers related to the zone
+	// TODO: This could probably be put into a single query
 	var triggers []interface{}
-
 	triggers, err = db.DBMap.Select(models.AumTrigger{}, `
 		SELECT * FROM workbench_triggers t
 		WHERE t."ZoneID"=$1
 	`, zone.ID)
 
+	// Map the triggers to the Zone
 	zone.Triggers = map[models.AumTriggerType]models.AumTrigger{}
 	for _, trigger := range triggers {
 		zone.Triggers[trigger.(*models.AumTrigger).TriggerType] = *trigger.(*models.AumTrigger)

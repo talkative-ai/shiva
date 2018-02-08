@@ -27,6 +27,7 @@ var GetProjects = &router.Route{
 
 func getProjectsHandler(w http.ResponseWriter, r *http.Request) {
 
+	// Parse the token and token data
 	token, err := utilities.ParseJTWClaims(w.Header().Get("x-token"))
 	tknData := token["data"].(map[string]interface{})
 	userID, err := uuid.FromString(tknData["user_id"].(string))
@@ -39,7 +40,8 @@ func getProjectsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate project access
+	// Validate access permissions to the project
+	// while simultaneously fetching project data
 	projects, err := db.DBMap.Select(&models.AumProject{}, `
 	SELECT p.* FROM workbench_projects p
 	JOIN team_members as m ON m."UserID"=$1
@@ -51,12 +53,13 @@ func getProjectsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Map all of the results to an array of JSON objects
 	results := []map[string]interface{}{}
-
 	for _, project := range projects {
 		res := project.(*models.AumProject).PrepareMarshal()
 		results = append(results, res)
 	}
 
+	// Return the projects
 	json.NewEncoder(w).Encode(results)
 }
