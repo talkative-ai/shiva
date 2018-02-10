@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/artificial-universe-maker/core/prehandle"
-	"github.com/artificial-universe-maker/core/router"
+	"github.com/talkative-ai/core/prehandle"
+	"github.com/talkative-ai/core/router"
 )
 
 // GetIndex router.Route

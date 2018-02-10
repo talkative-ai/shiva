@@ -1,0 +1,37 @@
+{
+  "title": "patch.actor",
+  "type": "object",
+  "properties": {
+    "ID": {
+      "type": "uuid"
+    },
+    "Title": {
+      "type": "string"
+    },
+    "Dialogs": {
+      "type": "array",
+      "items": [
+        {
+          "type": "object",
+          "properties": {
+
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "DialogRelations": {
+      "type": "array",
+      "items": [
+        {
+          "type": "object",
+          "properties": {
+
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "additionalProperties": false
+}

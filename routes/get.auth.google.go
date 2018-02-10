@@ -13,12 +13,12 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/artificial-universe-maker/core/db"
-	"github.com/artificial-universe-maker/core/models"
-	"github.com/artificial-universe-maker/core/myerrors"
-	"github.com/artificial-universe-maker/core/prehandle"
-	"github.com/artificial-universe-maker/core/redis"
-	"github.com/artificial-universe-maker/core/router"
+	"github.com/talkative-ai/core/db"
+	"github.com/talkative-ai/core/models"
+	"github.com/talkative-ai/core/myerrors"
+	"github.com/talkative-ai/core/prehandle"
+	"github.com/talkative-ai/core/redis"
+	"github.com/talkative-ai/core/router"
 	jwt "github.com/dgrijalva/jwt-go"
 	auth "google.golang.org/api/oauth2/v2"
 )

@@ -4,7 +4,7 @@ RUN apk add --update git
 
 COPY docker.gitconfig /root/.gitconfig
 
-RUN go get github.com/artificial-universe-maker/shiva
+RUN go get github.com/talkative-ai/shiva
 
 ENTRYPOINT /go/bin/shiva
 
