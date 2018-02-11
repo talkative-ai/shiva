@@ -6,13 +6,13 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
+	"github.com/gorilla/mux"
 	utilities "github.com/talkative-ai/core"
 	"github.com/talkative-ai/core/db"
 	"github.com/talkative-ai/core/models"
 	"github.com/talkative-ai/core/myerrors"
 	"github.com/talkative-ai/core/router"
 	uuid "github.com/talkative-ai/go.uuid"
-	"github.com/gorilla/mux"
 
 	"github.com/talkative-ai/core/prehandle"
 )
@@ -121,9 +121,12 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 
 			// If the StartZoneID for the project isn't set, default it to this zone.
 			// This is good UX when a user creates their first zone to the project.
-			if !proj.StartZoneID.Valid {
+			if !proj.StartZoneID.Valid || proj.StartZoneID.UUID == uuid.Nil {
 				proj.StartZoneID.UUID = newID
 				proj.StartZoneID.Valid = true
+				// We're updating the project start zone here
+				// TODO: Implement a better method to validate whether this is necessary
+				updateProjectStartZone(tx, proj.StartZoneID.UUID, proj.ID)
 			}
 		}
 
