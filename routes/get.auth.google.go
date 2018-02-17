@@ -13,13 +13,12 @@ import (
 	"regexp"
 	"time"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/talkative-ai/core/db"
 	"github.com/talkative-ai/core/models"
 	"github.com/talkative-ai/core/myerrors"
 	"github.com/talkative-ai/core/prehandle"
-	"github.com/talkative-ai/core/redis"
 	"github.com/talkative-ai/core/router"
-	jwt "github.com/dgrijalva/jwt-go"
 	auth "google.golang.org/api/oauth2/v2"
 )
 
@@ -63,17 +62,6 @@ func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 			Code:    http.StatusForbidden,
 			Req:     r,
 			Message: "verify_email",
-		})
-		return
-	}
-
-	// Check to see if the user is whitelisted
-	// This will be removed after the beta
-	if whitelisted := redis.Instance.SIsMember("whitelist", tokenInfo.Email).Val(); !whitelisted {
-		myerrors.Respond(w, &myerrors.MySimpleError{
-			Code:    http.StatusBadRequest,
-			Req:     r,
-			Message: "not_whitelisted",
 		})
 		return
 	}
