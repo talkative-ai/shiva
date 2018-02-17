@@ -19,7 +19,7 @@ import (
 // GetZone router.Route
 /* Path: "/zone/{id}"
  * Method: "GET"
- * Responds with models.AumZone
+ * Responds with models.Zone
  */
 var GetZone = &router.Route{
 	Path:       "/workbench/v1/zone/{id:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}}",
@@ -43,7 +43,7 @@ func getZoneHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch the zone data
-	zone := &models.AumZone{}
+	zone := &models.Zone{}
 	err = db.DBMap.SelectOne(zone, `SELECT * FROM workbench_zones WHERE "ID"=$1`, id)
 	if err != nil {
 		log.Printf("Zone %+v params %+v", *zone, urlparams)
@@ -72,15 +72,15 @@ func getZoneHandler(w http.ResponseWriter, r *http.Request) {
 	// Fetch all triggers related to the zone
 	// TODO: This could probably be put into a single query
 	var triggers []interface{}
-	triggers, err = db.DBMap.Select(models.AumTrigger{}, `
+	triggers, err = db.DBMap.Select(models.Trigger{}, `
 		SELECT * FROM workbench_triggers t
 		WHERE t."ZoneID"=$1
 	`, zone.ID)
 
 	// Map the triggers to the Zone
-	zone.Triggers = map[models.AumTriggerType]models.AumTrigger{}
+	zone.Triggers = map[models.TriggerType]models.Trigger{}
 	for _, trigger := range triggers {
-		zone.Triggers[trigger.(*models.AumTrigger).TriggerType] = *trigger.(*models.AumTrigger)
+		zone.Triggers[trigger.(*models.Trigger).TriggerType] = *trigger.(*models.Trigger)
 	}
 
 	// Return zone data

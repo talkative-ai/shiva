@@ -41,7 +41,7 @@ func deleteActorHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Validate actor access
-	actor := &models.AumActor{}
+	actor := &models.Actor{}
 	err = db.DBMap.SelectOne(actor, `SELECT * FROM workbench_actors WHERE "ID"=$1`, id)
 	if err != nil {
 		log.Printf("Actor %+v params %+v", *actor, urlparams)

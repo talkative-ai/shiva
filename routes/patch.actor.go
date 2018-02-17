@@ -18,7 +18,7 @@ import (
 // PatchActor router.Route
 /* Path: "/actor/{id}"
  * Method: "PATCH"
- * Accepts a models.AumActor, including nested []models.Dialog and []models.DialogRelation.
+ * Accepts a models.Actor, including nested []models.Dialog and []models.DialogRelation.
  * Responds with a map of generated IDs.
  * 		One place that generated IDs comes into play is when multiple objects are created
  *		on the frontend and related to each other in some way.
@@ -47,7 +47,7 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch the actor ProjectID and simultaneously check if it exists
-	actor := &models.AumActor{}
+	actor := &models.Actor{}
 	err = db.DBMap.SelectOne(actor, `SELECT "ProjectID" FROM workbench_actors WHERE "ID"=$1`, actorID)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)

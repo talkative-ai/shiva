@@ -48,7 +48,7 @@ func getProjectMetadataHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch the project data from the database
-	project := &models.AumProject{}
+	project := &models.Project{}
 	err = db.DBMap.SelectOne(project, `SELECT * FROM workbench_projects WHERE "ID"=$1`, id)
 	if err != nil {
 		log.Printf("Project %+v params %+v", *project, urlparams)

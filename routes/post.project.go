@@ -37,7 +37,7 @@ func postProjectHandler(w http.ResponseWriter, r *http.Request) {
 	token, err := utilities.ParseJTWClaims(w.Header().Get("x-token"))
 	tknData := token["data"].(map[string]interface{})
 
-	project := new(models.AumProject)
+	project := new(models.Project)
 	postProject := postProjectRequest{}
 
 	err = json.Unmarshal([]byte(r.Header.Get("X-Body")), &postProject)

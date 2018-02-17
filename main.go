@@ -49,7 +49,7 @@ func main() {
 	router.ApplyRoute(r, routes.DeleteZone)
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"https://aum.ai", "https://harihara.ngrok.io", "http://brahman.ngrok.io", "https://brahman.ngrok.io", "https://workbench.talkative.ai", "http://localhost:3000", "http://localhost:8080", "http://localhost:3001"},
+		AllowedOrigins:   []string{"https://talkative.ai", "https://harihara.ngrok.io", "http://brahman.ngrok.io", "https://brahman.ngrok.io", "https://workbench.talkative.ai", "http://localhost:3000", "http://localhost:8080", "http://localhost:3001"},
 		AllowCredentials: true,
 		AllowedHeaders:   []string{"x-token", "accept", "content-type"},
 		ExposedHeaders:   []string{"etag", "x-token"},

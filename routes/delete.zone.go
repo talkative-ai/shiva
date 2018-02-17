@@ -40,7 +40,7 @@ func deleteZoneHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate zone access
-	zone := &models.AumZone{}
+	zone := &models.Zone{}
 	err = db.DBMap.SelectOne(zone, `SELECT * FROM workbench_zones WHERE "ID"=$1`, id)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)

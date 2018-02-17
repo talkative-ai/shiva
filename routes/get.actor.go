@@ -18,7 +18,7 @@ import (
 // GetActor router.Route
 // Path: "/actor/{id}"
 // Method: "GET"
-// Responds with the corresponding models.AumActor data
+// Responds with the corresponding models.Actor data
 var GetActor = &router.Route{
 	Path:       "/workbench/v1/actor/{id:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}}",
 	Method:     "GET",
@@ -43,7 +43,7 @@ func getActorHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Getting the entity data from the database
-	actor := &models.AumActor{}
+	actor := &models.Actor{}
 	err = db.DBMap.SelectOne(actor, `SELECT * FROM workbench_actors WHERE "ID"=$1`, id)
 	if err != nil {
 		// Unable to find the actor
@@ -75,7 +75,7 @@ func getActorHandler(w http.ResponseWriter, r *http.Request) {
 	// Fetching all of the dialog nodes to a dialog item
 	// These are stored in the database as their own entities,
 	// but we combine it for frontend convenience
-	dialogNodes, err := db.DBMap.Select(models.AumDialogNode{}, `
+	dialogNodes, err := db.DBMap.Select(models.DialogNode{}, `
 		SELECT *
 		FROM workbench_dialog_nodes as dn
 		WHERE dn."ActorID"=$1`, id)
@@ -85,13 +85,13 @@ func getActorHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Map the dalogs to the actor
-	actor.Dialogs = []models.AumDialogNode{}
+	actor.Dialogs = []models.DialogNode{}
 	for _, dn := range dialogNodes {
-		actor.Dialogs = append(actor.Dialogs, *dn.(*models.AumDialogNode))
+		actor.Dialogs = append(actor.Dialogs, *dn.(*models.DialogNode))
 	}
 
 	// Same with the dialog nodes, only this time we're fetching their relations
-	dialogRelations, err := db.DBMap.Select(models.AumDialogRelation{}, `
+	dialogRelations, err := db.DBMap.Select(models.DialogRelation{}, `
 		SELECT DISTINCT dr.*
 		FROM workbench_dialog_nodes as dn
 		JOIN workbench_dialog_nodes_relations as dr
@@ -100,9 +100,9 @@ func getActorHandler(w http.ResponseWriter, r *http.Request) {
 		WHERE dn."ActorID"=$1`, id)
 
 	// Map to the actor
-	actor.DialogRelations = []models.AumDialogRelation{}
+	actor.DialogRelations = []models.DialogRelation{}
 	for _, dr := range dialogRelations {
-		actor.DialogRelations = append(actor.DialogRelations, *dr.(*models.AumDialogRelation))
+		actor.DialogRelations = append(actor.DialogRelations, *dr.(*models.DialogRelation))
 	}
 
 	// Return actor data

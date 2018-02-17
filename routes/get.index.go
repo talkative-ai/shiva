@@ -21,5 +21,5 @@ var GetIndex = &router.Route{
 }
 
 func getIndexHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Want to help us build this api and more? Email us: info@aum.ai")
+	fmt.Fprintf(w, "Want to help us build this api and more? Email me: wyatt@talkative.ai")
 }

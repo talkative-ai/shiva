@@ -42,7 +42,7 @@ func getProjectsHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Validate access permissions to the project
 	// while simultaneously fetching project data
-	projects, err := db.DBMap.Select(&models.AumProject{}, `
+	projects, err := db.DBMap.Select(&models.Project{}, `
 	SELECT p.* FROM workbench_projects p
 	JOIN team_members as m ON m."UserID"=$1
 	JOIN teams as t ON t."ID"=m."TeamID"
@@ -56,7 +56,7 @@ func getProjectsHandler(w http.ResponseWriter, r *http.Request) {
 	// Map all of the results to an array of JSON objects
 	results := []map[string]interface{}{}
 	for _, project := range projects {
-		res := project.(*models.AumProject).PrepareMarshal()
+		res := project.(*models.Project).PrepareMarshal()
 		results = append(results, res)
 	}
 

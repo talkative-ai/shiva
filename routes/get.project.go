@@ -18,7 +18,7 @@ import (
 // GetProject router.Route
 /* Path: "/project/{id}"
  * Method: "GET"
- * Responds with a models.AumProject
+ * Responds with a models.Project
  */
 var GetProject = &router.Route{
 	Path:       "/workbench/v1/project/{id:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}}",
@@ -42,7 +42,7 @@ func getProjectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the project data from the database
-	project := &models.AumProject{}
+	project := &models.Project{}
 	err = db.DBMap.SelectOne(project, `SELECT * FROM workbench_projects WHERE "ID"=$1`, id)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -69,34 +69,34 @@ func getProjectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get all of the zones
-	zones, err := db.DBMap.Select(models.AumZone{}, `SELECT * FROM workbench_zones WHERE "ProjectID"=$1`, id)
+	zones, err := db.DBMap.Select(models.Zone{}, `SELECT * FROM workbench_zones WHERE "ProjectID"=$1`, id)
 	if err != nil {
 		myerrors.ServerError(w, r, err)
 		return
 	}
 
 	// Attach the zones to the project model. This is for the frontend
-	project.Zones = []models.AumZone{}
+	project.Zones = []models.Zone{}
 	for _, zone := range zones {
-		project.Zones = append(project.Zones, *zone.(*models.AumZone))
+		project.Zones = append(project.Zones, *zone.(*models.Zone))
 	}
 
 	// Get all of the actors
-	actors, err := db.DBMap.Select(models.AumActor{}, `SELECT * FROM workbench_actors WHERE "ProjectID"=$1`, id)
+	actors, err := db.DBMap.Select(models.Actor{}, `SELECT * FROM workbench_actors WHERE "ProjectID"=$1`, id)
 	if err != nil {
 		myerrors.ServerError(w, r, err)
 		return
 	}
 
 	// Attach the actors to the project model.
-	project.Actors = []models.AumActor{}
+	project.Actors = []models.Actor{}
 	for _, actor := range actors {
-		project.Actors = append(project.Actors, *actor.(*models.AumActor))
+		project.Actors = append(project.Actors, *actor.(*models.Actor))
 	}
 
 	// Now get all the zone/actor relations
 	// We do this because an actor can exist in multiple zones.
-	zoneActors, err := db.DBMap.Select(models.AumZoneActor{}, `
+	zoneActors, err := db.DBMap.Select(models.ZoneActor{}, `
 		SELECT DISTINCT za."ZoneID", za."ActorID"
 		FROM workbench_zones as z
 		JOIN workbench_zones_actors as za
@@ -104,9 +104,9 @@ func getProjectHandler(w http.ResponseWriter, r *http.Request) {
 		WHERE z."ProjectID"=$1`, id)
 
 	// Attach as above
-	project.ZoneActors = []models.AumZoneActor{}
+	project.ZoneActors = []models.ZoneActor{}
 	for _, za := range zoneActors {
-		project.ZoneActors = append(project.ZoneActors, *za.(*models.AumZoneActor))
+		project.ZoneActors = append(project.ZoneActors, *za.(*models.ZoneActor))
 	}
 
 	// Return project data

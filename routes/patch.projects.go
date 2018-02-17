@@ -21,7 +21,7 @@ import (
 /* Path: "/project/{id}",
  * Method: "PATCH",
  * Accepts models.TokenValidate
- * Accepts a models.AumActor, including nested []models.Dialog and []models.DialogRelation.
+ * Accepts a models.Actor, including nested []models.Dialog and []models.DialogRelation.
  * Responds with a map of generated IDs.
  * 		One place that generated IDs comes into play is when multiple objects are created
  *		on the frontend and related to each other in some way.
@@ -70,14 +70,14 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 	// Fetching the start zone of the project
 	// This will be used later because if there's no StartZoneID
 	// then we set it to default to the first zone created
-	proj := &models.AumProject{}
+	proj := &models.Project{}
 	db.DBMap.SelectOne(proj, `
 		SELECT "StartZoneID"
 		FROM workbench_projects
 		WHERE "ID"=$1
 		`, projectID)
 
-	project := new(models.AumProject)
+	project := new(models.Project)
 
 	// Parse the frontend payload into the project model
 	err = json.Unmarshal([]byte(r.Header.Get("x-body")), project)
