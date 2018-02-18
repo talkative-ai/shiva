@@ -31,9 +31,9 @@ import (
  */
 var PostAuthGoogle = &router.Route{
 	Path:       "/workbench/v1/auth/google",
-	Method:     "GET",
+	Method:     "POST",
 	Handler:    http.HandlerFunc(postAuthGoogleHandler),
-	Prehandler: []prehandle.Prehandler{},
+	Prehandler: []prehandle.Prehandler{prehandle.RequireBody(65535)},
 }
 
 func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
@@ -45,15 +45,25 @@ func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate the token info on Google's servers
-	tokenInfo, err := authService.Tokeninfo().IdToken(r.FormValue("token")).Do()
-	if err != nil {
-		// If there's a problem, just assume it's unauthorized.
-		myerrors.Respond(w, &myerrors.MySimpleError{
-			Code: http.StatusUnauthorized,
-			Req:  r,
-		})
-		return
+	var tokenInfo *auth.Tokeninfo
+
+	if os.Getenv("DEVELOPMENT_ENVIRONMENT") == "TESTING" {
+		err := json.Unmarshal([]byte(r.Header.Get("X-Body")), &tokenInfo)
+		if err != nil {
+			fmt.Println("Problem", err, r.Header.Get("X-Body"))
+			return
+		}
+	} else {
+		// Validate the token info on Google's servers
+		tokenInfo, err = authService.Tokeninfo().IdToken(r.FormValue("token")).Do()
+		if err != nil {
+			// If there's a problem, just assume it's unauthorized.
+			myerrors.Respond(w, &myerrors.MySimpleError{
+				Code: http.StatusUnauthorized,
+				Req:  r,
+			})
+			return
+		}
 	}
 
 	if !tokenInfo.VerifiedEmail {
