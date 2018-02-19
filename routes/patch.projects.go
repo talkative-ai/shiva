@@ -89,6 +89,7 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 	// Reset the projectID to the one we validated
 	// to prevent tampering
 	project.ID = projectID
+	project.StartZoneID = proj.StartZoneID
 
 	// Create a transaction
 	tx := db.Instance.MustBegin()
@@ -121,12 +122,12 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 
 			// If the StartZoneID for the project isn't set, default it to this zone.
 			// This is good UX when a user creates their first zone to the project.
-			if !proj.StartZoneID.Valid || proj.StartZoneID.UUID == uuid.Nil {
-				proj.StartZoneID.UUID = newID
-				proj.StartZoneID.Valid = true
+			if !project.StartZoneID.Valid || project.StartZoneID.UUID == uuid.Nil {
+				project.StartZoneID.UUID = newID
+				project.StartZoneID.Valid = true
 				// We're updating the project start zone here
 				// TODO: Implement a better method to validate whether this is necessary
-				updateProjectStartZone(tx, proj.StartZoneID.UUID, proj.ID)
+				updateProjectStartZone(tx, project.StartZoneID.UUID, project.ID)
 			}
 		}
 
@@ -302,8 +303,8 @@ func updateProjectStartZone(context *sqlx.Tx, StartZoneID, projectID uuid.UUID) 
 	// First validate that the zone exists in the project
 	var count int
 	context.QueryRow(`
-			SELECT COUNT(*) FROM workbench_zones
-			WHERE "ID"=$1 AND "ProjectID"=$2`,
+		SELECT COUNT(*) FROM workbench_zones
+		WHERE "ID"=$1 AND "ProjectID"=$2`,
 		StartZoneID, projectID).Scan(&count)
 	if count <= 0 {
 		// If not, then abort
@@ -312,10 +313,9 @@ func updateProjectStartZone(context *sqlx.Tx, StartZoneID, projectID uuid.UUID) 
 
 	// Update the value on the project
 	context.Exec(`
-		UPDATE workbench_projects
-		SET "StartZoneID"=$1
-		WHERE "ID"=$2
-		`, StartZoneID, projectID)
-
+			UPDATE workbench_projects
+			SET "StartZoneID"=$1
+			WHERE "ID"=$2
+			`, StartZoneID, projectID)
 	return true
 }

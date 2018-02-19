@@ -36,6 +36,12 @@ var PostAuthGoogle = &router.Route{
 	Prehandler: []prehandle.Prehandler{prehandle.RequireBody(65535)},
 }
 
+type postAuthGooglePayload struct {
+	Token      string
+	GivenName  string
+	FamilyName string
+}
+
 func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Create a new Google Auth service
@@ -46,12 +52,19 @@ func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var tokenInfo *auth.Tokeninfo
+	userInfo := postAuthGooglePayload{}
+	err = json.Unmarshal([]byte(r.Header.Get("X-Body")), &userInfo)
+	if err != nil {
+		// If there's an error and it's not that there are no rows
+		// Then there's something wonky going on and we'll just return it here.
+		myerrors.ServerError(w, r, err)
+		return
+	}
 
 	if os.Getenv("DEVELOPMENT_ENVIRONMENT") == "TESTING" {
-		err := json.Unmarshal([]byte(r.Header.Get("X-Body")), &tokenInfo)
-		if err != nil {
-			fmt.Println("Problem", err, r.Header.Get("X-Body"))
-			return
+		tokenInfo = &auth.Tokeninfo{
+			Email:         "wyatt+test@talkative.ai",
+			VerifiedEmail: true,
 		}
 	} else {
 		// Validate the token info on Google's servers
@@ -94,8 +107,8 @@ func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 		newUser = true
 		// Store their details.
 		user.Email = tokenInfo.Email
-		user.GivenName = r.FormValue("gn")
-		user.FamilyName = r.FormValue("fn")
+		user.GivenName = userInfo.GivenName
+		user.FamilyName = userInfo.FamilyName
 
 		// If the name contains bogus characters, or is empty, or is huge, then don't accept it
 		// We want to make sure people are using normal names. This isn't Reddit.

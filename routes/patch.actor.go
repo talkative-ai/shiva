@@ -155,6 +155,7 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 
 				// Map the frontend-generated temporary ID to the newly generated permanent UUID
 				generatedIDs[*dialog.CreateID] = newID
+				w.WriteHeader(http.StatusCreated)
 				continue
 			}
 		case models.PatchActionDelete:
