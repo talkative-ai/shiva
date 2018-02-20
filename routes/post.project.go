@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"regexp"
 	"strings"
 
 	utilities "github.com/talkative-ai/core"
@@ -76,10 +77,32 @@ func postProjectHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Enforce project limit
 	if count >= db.GetMaxProjects() {
 		myerrors.Respond(w, &myerrors.MySimpleError{
 			Code:    http.StatusForbidden,
 			Message: "project_limit_reached",
+			Req:     r,
+		})
+		return
+	}
+
+	// Enforce minimum project title length
+	if len(project.Title) < 3 || len(project.Title) > 50 {
+		myerrors.Respond(w, &myerrors.MySimpleError{
+			Code:    http.StatusBadRequest,
+			Message: "bad_title",
+			Req:     r,
+		})
+		return
+	}
+
+	// Disallow special characters
+	match, _ := regexp.MatchString(`[^\w\s!]`, project.Title)
+	if match {
+		myerrors.Respond(w, &myerrors.MySimpleError{
+			Code:    http.StatusBadRequest,
+			Message: "bad_title",
 			Req:     r,
 		})
 		return

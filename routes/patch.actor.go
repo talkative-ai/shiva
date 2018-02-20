@@ -93,9 +93,15 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 	// Open up a database transaction. Either the whole actor updates or nothing at all
 	tx := db.Instance.MustBegin()
 
-	// TODO:
-	// Way more field validations here
-	// Probably generalize validations across models
+	if len(actor.Title) == 0 || len(actor.Title) > 255 {
+		myerrors.Respond(w, &myerrors.MySimpleError{
+			Code:    http.StatusBadRequest,
+			Message: "bad_title",
+			Req:     r,
+		})
+		return
+	}
+
 	db.DBMap.Update(actor)
 
 	// The frontend can create multiple new entities at once,
@@ -125,51 +131,74 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 			// The frontend just nests dialogs within the actor model out of convenience
 			// So here we're transforming it back into the shape the database expects
 			dialog.ActorID = actorID
-			if dialog.CreateID != nil {
-				var newID uuid.UUID
-				// Prepare these values for the SQL query
-				dEntryInput, err := dialog.EntryInput.Value()
-				if err != nil {
-					myerrors.ServerError(w, r, err)
-					return
-				}
-				dAlwaysExec, err := dialog.AlwaysExec.Value()
-				if err != nil {
-					myerrors.ServerError(w, r, err)
-					return
-				}
-				dStatements, err := dialog.Statements.Value()
-				if err != nil {
-					myerrors.ServerError(w, r, err)
-					return
-				}
+			if dialog.CreateID == nil {
+				myerrors.Respond(w, &myerrors.MySimpleError{
+					Code:    http.StatusBadRequest,
+					Message: "no_create_id",
+					Req:     r,
+				})
+				return
+			}
+			var newID uuid.UUID
+			// Prepare these values for the SQL query
+			dEntryInput, err := dialog.EntryInput.Value()
+			if err != nil {
+				myerrors.ServerError(w, r, err)
+				return
+			}
+			dAlwaysExec, err := dialog.AlwaysExec.Value()
+			if err != nil {
+				myerrors.ServerError(w, r, err)
+				return
+			}
+			dStatements, err := dialog.Statements.Value()
+			if err != nil {
+				myerrors.ServerError(w, r, err)
+				return
+			}
 
-				// Create the new dialog
-				err = tx.QueryRow(`INSERT INTO 
+			// Create the new dialog
+			err = tx.QueryRow(`INSERT INTO
 				workbench_dialog_nodes ("ActorID", "EntryInput", "AlwaysExec", "Statements", "IsRoot", "UnknownHandler")
 				VALUES ($1, $2, $3, $4, $5, $6) RETURNING "ID"`, dialog.ActorID, dEntryInput, dAlwaysExec, dStatements, dialog.IsRoot, dialog.UnknownHandler).Scan(&newID)
-				if err != nil {
-					myerrors.ServerError(w, r, err)
-					return
-				}
-
-				// Map the frontend-generated temporary ID to the newly generated permanent UUID
-				generatedIDs[*dialog.CreateID] = newID
-				w.WriteHeader(http.StatusCreated)
-				continue
+			if err != nil {
+				myerrors.ServerError(w, r, err)
+				return
 			}
-		case models.PatchActionDelete:
 
-			// If we're deleting the actor, we need to delete all connected nodes
-			// TODO: Delete from zone relations, and delete actor model itself.
-			tx.Exec(`DELETE FROM
-				workbench_dialog_nodes_relations
-				WHERE "ParentNodeID"=$1 OR "ChildNodeID"=$1`, dialog.ID)
-			tx.Exec(`DELETE FROM
-				workbench_dialog_nodes
-				WHERE "ID"=$1`, dialog.ID)
+			// Map the frontend-generated temporary ID to the newly generated permanent UUID
+			generatedIDs[*dialog.CreateID] = newID
+			w.WriteHeader(http.StatusCreated)
+		// case models.PatchActionDelete:
+
+		// 	// If we're deleting the actor, we need to delete all connected nodes
+		// 	// TODO: Delete from zone relations, and delete actor model itself.
+		// 	tx.Exec(`DELETE FROM
+		// 		workbench_dialog_nodes_relations
+		// 		WHERE "ParentNodeID"=$1 OR "ChildNodeID"=$1`, dialog.ID)
+		// 	tx.Exec(`DELETE FROM
+		// 		workbench_dialog_nodes
+		// 		WHERE "ID"=$1`, dialog.ID)
 
 		case models.PatchActionUpdate:
+			if dialog.UnknownHandler && len(dialog.EntryInput) == 0 {
+				myerrors.Respond(w, &myerrors.MySimpleError{
+					Code:    http.StatusBadRequest,
+					Message: "missing_entry_input",
+					Req:     r,
+				})
+				return
+			}
+
+			if len(dialog.AlwaysExec.PlaySounds) == 0 {
+				myerrors.Respond(w, &myerrors.MySimpleError{
+					Code:    http.StatusBadRequest,
+					Message: "missing_play_sounds",
+					Req:     r,
+				})
+				return
+			}
+
 			// Here we're updating an existing dialog
 			dEntryInput, err := dialog.EntryInput.Value()
 			if err != nil {
@@ -218,15 +247,34 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 
 		switch *relation.PatchAction {
 		case models.PatchActionCreate:
-			// Creating the relation
-			tx.Exec(`INSERT INTO
-				workbench_dialog_nodes_relations ("ParentNodeID", "ChildNodeID")
-				VALUES ($1, $2)`, relation.ParentNodeID, relation.ChildNodeID)
+			// Creating the relation and disallow duplicates
+			tx.Exec(`
+				INSERT INTO
+					workbench_dialog_nodes_relations ("ParentNodeID", "ChildNodeID")
+				SELECT $1, $2
+				WHERE NOT EXISTS (
+					SELECT "ParentNodeID" FROM workbench_dialog_nodes_relations
+					WHERE "ParentNodeID" = $1
+					AND "ChildNodeID" = $2
+				)`, relation.ParentNodeID, relation.ChildNodeID)
 		case models.PatchActionDelete:
 			// Deleting the relation
-			tx.Exec(`DELETE FROM
+			tx.Exec(`
+				DELETE FROM
 				workbench_dialog_nodes_relations
-				WHERE "ParentNodeID"=$1 AND "ChildNodeID"=$2`, relation.ParentNodeID, relation.ChildNodeID)
+				WHERE "ParentNodeID"=$1 AND "ChildNodeID"=$2
+				AND EXISTS (
+					SELECT wd."ActorID"
+					FROM workbench_dialog_nodes wd
+					WHERE wd."ID"=$1
+					AND wd."ActorID"=$3
+				)
+				AND EXISTS (
+					SELECT wd."ActorID"
+					FROM workbench_dialog_nodes wd
+					WHERE wd."ID"=$2
+					AND wd."ActorID"=$3
+				)`, relation.ParentNodeID, relation.ChildNodeID, actor.ID)
 		}
 	}
 

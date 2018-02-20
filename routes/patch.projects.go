@@ -102,6 +102,15 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 	// First we update the project zones
 	for _, zone := range project.Zones {
 
+		if len(zone.Title) == 0 || len(zone.Title) > 255 {
+			myerrors.Respond(w, &myerrors.MySimpleError{
+				Code:    http.StatusBadRequest,
+				Message: "bad_zone_title",
+				Req:     r,
+			})
+			return
+		}
+
 		// If the CreateID has a value, then the frontend has generated a temp
 		// ID for this zone, it's a new zone, and we need to insert it into the database
 		if zone.CreateID != nil {
@@ -143,18 +152,25 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 				tx.Exec(`
 					DELETE FROM workbench_triggers
 					WHERE "ProjectID"=$1
-					AND "TriggerType"=$2`, project.ID, trigger.TriggerType)
+					AND "TriggerType"=$2
+					AND "ZoneID"=$3`, project.ID, trigger.TriggerType, trigger.ZoneID)
 				continue
 			}
 
 			if *trigger.PatchAction == models.PatchActionCreate {
 				// Creating a new trigger
 				trigger.TriggerType = t
-				if trigger.ZoneID.CreateID != nil {
-					// The trigger was added to a zone that was created on the frontend but never stored on the backend
-					// therefore we need to update the ZoneID with the new permanent ID
-					trigger.ZoneID.UUID = generatedIDs[*trigger.ZoneID.CreateID]
+				if trigger.ZoneID.CreateID == nil {
+					myerrors.Respond(w, &myerrors.MySimpleError{
+						Code:    http.StatusBadRequest,
+						Message: "missing_create_id",
+						Req:     r,
+					})
+					return
 				}
+				// The trigger was added to a zone that was created on the frontend but never stored on the backend
+				// therefore we need to update the ZoneID with the new permanent ID
+				trigger.ZoneID.UUID = generatedIDs[*trigger.ZoneID.CreateID]
 
 				// Prepare the non-standard model values to be stored in the database
 				execPrepared, err := trigger.AlwaysExec.Value()
@@ -167,7 +183,12 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 				_, err = tx.Exec(`
 					INSERT INTO workbench_triggers
 						("ProjectID", "ZoneID", "TriggerType", "AlwaysExec")
-					VALUES ($1, $2, $3, $4)`, project.ID, zone.ID, trigger.TriggerType, execPrepared)
+					SELECT $1, $2, $3, $4
+					WHERE NOT EXISTS (
+						SELECT "ZoneID" FROM workbench_zones
+						WHERE "ProjectID" = $1
+						AND "ID" = $2
+					)`, project.ID, zone.ID, trigger.TriggerType, execPrepared)
 				if err != nil {
 					myerrors.ServerError(w, r, err)
 					return
@@ -197,23 +218,39 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 	for _, actor := range project.Actors {
 		// The only updating that will happen here is creating new actors.
 		// Updating existing actors actually happens in the patch.actor endpoint
-		if actor.CreateID != nil {
-			var newID uuid.UUID
-			// New actors have a CreateID set. Otherwise they already exist
-			// Store the new actor.
-			err = tx.QueryRow(`
+		if actor.CreateID == nil {
+			myerrors.Respond(w, &myerrors.MySimpleError{
+				Code:    http.StatusBadRequest,
+				Message: "missing_create_id",
+				Req:     r,
+			})
+			return
+		}
+
+		if len(actor.Title) == 0 || len(actor.Title) > 255 {
+			myerrors.Respond(w, &myerrors.MySimpleError{
+				Code:    http.StatusBadRequest,
+				Message: "bad_actor_title",
+				Req:     r,
+			})
+			return
+		}
+
+		var newID uuid.UUID
+		// New actors have a CreateID set. Otherwise they already exist
+		// Store the new actor.
+		err = tx.QueryRow(`
 				INSERT INTO workbench_actors
 					("ProjectID", "Title")
 				VALUES ($1, $2) RETURNING "ID"`, projectID, actor.Title).Scan(&newID)
-			if err != nil {
-				myerrors.ServerError(w, r, err)
-				return
-			}
-			w.WriteHeader(http.StatusCreated)
-			// Mapping the old ID and the new ID
-			generatedIDs[*actor.CreateID] = newID
-			actor.ID = newID
+		if err != nil {
+			myerrors.ServerError(w, r, err)
+			return
 		}
+		w.WriteHeader(http.StatusCreated)
+		// Mapping the old ID and the new ID
+		generatedIDs[*actor.CreateID] = newID
+		actor.ID = newID
 	}
 
 	// Updating the actors relationships to the zones
@@ -237,21 +274,29 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 		switch *za.PatchAction {
 		case models.PatchActionCreate:
 			// The actor was added to the zone
-			// Delete any existing identical relations to ensure
-			// there's no duplicate entries in the DB
-			tx.Exec(`
-				DELETE FROM workbench_zones_actors
-				WHERE "ZoneID"=$1 AND "ActorID"=$2`, za.ZoneID, za.ActorID)
-
 			// Create the new relation into the DB
 			tx.Exec(`INSERT INTO
 				workbench_zones_actors ("ZoneID", "ActorID")
-				VALUES ($1, $2)`, za.ZoneID, za.ActorID)
+				SELECT $1, $2
+				WHERE NOT EXISTS (
+					SELECT "ZoneID" FROM workbench_zones_actors
+					WHERE "ZoneID" = $1
+					AND "ActorID" = $2
+				)`, za.ZoneID, za.ActorID)
 		case models.PatchActionDelete:
 			// The actor was removed from the zone
 			tx.Exec(`
 				DELETE FROM workbench_zones_actors
-				WHERE "ZoneID"=$1 AND "ActorID"=$2`, za.ZoneID, za.ActorID)
+				WHERE "ZoneID"=$1
+				AND "ActorID"=$2
+				AND EXISTS (
+					SELECT wz."ProjectID" FROM workbench_zones wz
+					INNER JOIN workbench_actors wa
+					ON wa."ProjectID"=wz."ProjectID"
+					AND wa."ID"=$2
+					WHERE wz."ID"=$1
+					AND wz."ProjectID"=$3
+				)`, za.ZoneID, za.ActorID, projectID)
 		}
 	}
 
