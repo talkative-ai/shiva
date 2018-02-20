@@ -87,11 +87,14 @@ func postProjectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	project.Title = postProject.Title
+	postProject.Title = ""
+
 	// Enforce minimum project title length
 	if len(project.Title) < 3 || len(project.Title) > 50 {
 		myerrors.Respond(w, &myerrors.MySimpleError{
 			Code:    http.StatusBadRequest,
-			Message: "bad_title",
+			Message: "bad_title_length",
 			Req:     r,
 		})
 		return
@@ -102,14 +105,11 @@ func postProjectHandler(w http.ResponseWriter, r *http.Request) {
 	if match {
 		myerrors.Respond(w, &myerrors.MySimpleError{
 			Code:    http.StatusBadRequest,
-			Message: "bad_title",
+			Message: "bad_title_characters",
 			Req:     r,
 		})
 		return
 	}
-
-	project.Title = postProject.Title
-	postProject.Title = ""
 
 	err = db.DBMap.SelectOne(&postProject, `SELECT * FROM workbench_projects WHERE Lower("Title")=Lower($1)`, project.Title)
 
