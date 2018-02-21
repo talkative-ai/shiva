@@ -68,7 +68,7 @@ func postAuthGoogleHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		// Validate the token info on Google's servers
-		tokenInfo, err = authService.Tokeninfo().IdToken(r.FormValue("token")).Do()
+		tokenInfo, err = authService.Tokeninfo().IdToken(userInfo.Token).Do()
 		if err != nil {
 			// If there's a problem, just assume it's unauthorized.
 			myerrors.Respond(w, &myerrors.MySimpleError{
