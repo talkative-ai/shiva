@@ -102,18 +102,19 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 	// First we update the project zones
 	for _, zone := range project.Zones {
 
-		if len(zone.Title) == 0 || len(zone.Title) > 255 {
-			myerrors.Respond(w, &myerrors.MySimpleError{
-				Code:    http.StatusBadRequest,
-				Message: "bad_zone_title",
-				Req:     r,
-			})
-			return
-		}
-
 		// If the CreateID has a value, then the frontend has generated a temp
 		// ID for this zone, it's a new zone, and we need to insert it into the database
 		if zone.CreateID != nil {
+
+			if len(zone.Title) == 0 || len(zone.Title) > 255 {
+				myerrors.Respond(w, &myerrors.MySimpleError{
+					Code:    http.StatusBadRequest,
+					Message: "bad_zone_title",
+					Req:     r,
+				})
+				return
+			}
+
 			var newID uuid.UUID
 			err = tx.QueryRow(`
 				INSERT INTO workbench_zones
@@ -160,18 +161,11 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 			if *trigger.PatchAction == models.PatchActionCreate {
 				// Creating a new trigger
 				trigger.TriggerType = t
-				if trigger.ZoneID.CreateID == nil {
-					myerrors.Respond(w, &myerrors.MySimpleError{
-						Code:    http.StatusBadRequest,
-						Message: "missing_create_id",
-						Req:     r,
-					})
-					return
+				if trigger.ZoneID.CreateID != nil {
+					// The trigger was added to a zone that was created on the frontend but never stored on the backend
+					// therefore we need to update the ZoneID with the new permanent ID
+					trigger.ZoneID.UUID = generatedIDs[*trigger.ZoneID.CreateID]
 				}
-				// The trigger was added to a zone that was created on the frontend but never stored on the backend
-				// therefore we need to update the ZoneID with the new permanent ID
-				trigger.ZoneID.UUID = generatedIDs[*trigger.ZoneID.CreateID]
-
 				// Prepare the non-standard model values to be stored in the database
 				execPrepared, err := trigger.AlwaysExec.Value()
 				if err != nil {
@@ -184,8 +178,8 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 					INSERT INTO workbench_triggers
 						("ProjectID", "ZoneID", "TriggerType", "AlwaysExec")
 					SELECT $1, $2, $3, $4
-					WHERE NOT EXISTS (
-						SELECT "ZoneID" FROM workbench_zones
+					WHERE EXISTS (
+						SELECT "ID" FROM workbench_zones
 						WHERE "ProjectID" = $1
 						AND "ID" = $2
 					)`, project.ID, zone.ID, trigger.TriggerType, execPrepared)
