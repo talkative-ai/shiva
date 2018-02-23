@@ -58,7 +58,7 @@ func postDemoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rq, err := http.NewRequest("POST", fmt.Sprintf("http://lakshmi:8080/v1/publish/%v?demo=true", urlparams["id"]), nil)
+	rq, err := http.NewRequest("POST", fmt.Sprintf("http://lakshmi:8080/v1/publish/%v/?demo=true", urlparams["id"]), nil)
 	if err != nil {
 		myerrors.ServerError(w, r, err)
 	}
