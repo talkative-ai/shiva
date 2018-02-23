@@ -15,20 +15,20 @@ import (
 	"github.com/talkative-ai/core/router"
 )
 
-// PostSubmit router.Route
-/* Path: "/submit",
+// PostDemo router.Route
+/* Path: "/publish",
  * Method: "POST",
  * Accepts models.UserRegister
  * Responds with status of success or failure
  */
-var PostSubmit = &router.Route{
-	Path:       "/workbench/v1/submit/{id:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}}",
+var PostDemo = &router.Route{
+	Path:       "/workbench/v1/demo/{id:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}}",
 	Method:     "POST",
-	Handler:    http.HandlerFunc(postSubmitHandler),
+	Handler:    http.HandlerFunc(postDemoHandler),
 	Prehandler: []prehandle.Prehandler{prehandle.JWT},
 }
 
-func postSubmitHandler(w http.ResponseWriter, r *http.Request) {
+func postDemoHandler(w http.ResponseWriter, r *http.Request) {
 
 	urlparams := mux.Vars(r)
 
@@ -58,7 +58,7 @@ func postSubmitHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rq, err := http.NewRequest("POST", fmt.Sprintf("http://lakshmi:8080/v1/submit/%v", urlparams["id"]), nil)
+	rq, err := http.NewRequest("POST", fmt.Sprintf("http://lakshmi:8080/v1/publish/%v?demo=true", urlparams["id"]), nil)
 	if err != nil {
 		myerrors.ServerError(w, r, err)
 	}
