@@ -67,16 +67,6 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fetching the start zone of the project
-	// This will be used later because if there's no StartZoneID
-	// then we set it to default to the first zone created
-	proj := &models.Project{}
-	db.DBMap.SelectOne(proj, `
-		SELECT "StartZoneID"
-		FROM workbench_projects
-		WHERE "ID"=$1
-		`, projectID)
-
 	project := new(models.Project)
 
 	// Parse the frontend payload into the project model
@@ -89,7 +79,6 @@ func patchProjectsHandler(w http.ResponseWriter, r *http.Request) {
 	// Reset the projectID to the one we validated
 	// to prevent tampering
 	project.ID = projectID
-	project.StartZoneID = proj.StartZoneID
 
 	// Create a transaction
 	tx := db.Instance.MustBegin()
