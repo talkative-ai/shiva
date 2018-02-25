@@ -41,6 +41,7 @@ func main() {
 	router.ApplyRoute(r, routes.PostAuthGoogle)
 	router.ApplyRoute(r, routes.GetProject)
 	router.ApplyRoute(r, routes.GetProjectMetadata)
+	router.ApplyRoute(r, routes.GetDemoStatus)
 	router.ApplyRoute(r, routes.GetActor)
 	router.ApplyRoute(r, routes.GetZone)
 	router.ApplyRoute(r, routes.PatchActor)
