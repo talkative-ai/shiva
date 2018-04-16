@@ -173,10 +173,22 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 		case models.PatchActionDelete:
 			tx.Exec(`DELETE FROM
 				workbench_dialog_nodes_relations
-				WHERE "ParentNodeID"=$1 OR "ChildNodeID"=$1`, dialog.ID)
+				WHERE "ParentNodeID"=$1 OR "ChildNodeID"=$1
+				AND EXISTS (
+					SELECT wd."ActorID"
+					FROM workbench_dialog_nodes wd
+					WHERE wd."ID"=$1
+					AND wd."ActorID"=$2
+				)`, dialog.ID, actor.ID)
 			tx.Exec(`DELETE FROM
 				workbench_dialog_nodes
-				WHERE "ID"=$1`, dialog.ID)
+				WHERE "ID"=$1
+				AND EXISTS (
+					SELECT wd."ActorID"
+					FROM workbench_dialog_nodes wd
+					WHERE wd."ID"=$1
+					AND wd."ActorID"=$2
+				)`, dialog.ID, actor.ID)
 
 		case models.PatchActionUpdate:
 			if dialog.UnknownHandler && len(dialog.EntryInput) == 0 {
