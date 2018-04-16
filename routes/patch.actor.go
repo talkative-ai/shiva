@@ -169,16 +169,14 @@ func putActorHandler(w http.ResponseWriter, r *http.Request) {
 			// Map the frontend-generated temporary ID to the newly generated permanent UUID
 			generatedIDs[*dialog.CreateID] = newID
 			w.WriteHeader(http.StatusCreated)
-		// case models.PatchActionDelete:
 
-		// 	// If we're deleting the actor, we need to delete all connected nodes
-		// 	// TODO: Delete from zone relations, and delete actor model itself.
-		// 	tx.Exec(`DELETE FROM
-		// 		workbench_dialog_nodes_relations
-		// 		WHERE "ParentNodeID"=$1 OR "ChildNodeID"=$1`, dialog.ID)
-		// 	tx.Exec(`DELETE FROM
-		// 		workbench_dialog_nodes
-		// 		WHERE "ID"=$1`, dialog.ID)
+		case models.PatchActionDelete:
+			tx.Exec(`DELETE FROM
+				workbench_dialog_nodes_relations
+				WHERE "ParentNodeID"=$1 OR "ChildNodeID"=$1`, dialog.ID)
+			tx.Exec(`DELETE FROM
+				workbench_dialog_nodes
+				WHERE "ID"=$1`, dialog.ID)
 
 		case models.PatchActionUpdate:
 			if dialog.UnknownHandler && len(dialog.EntryInput) == 0 {
