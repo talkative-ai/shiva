@@ -36,9 +36,12 @@ func main() {
 
 	router.ApplyRoute(r, routes.GetProjects)
 	router.ApplyRoute(r, routes.PostProject)
+
 	router.ApplyRoute(r, routes.PostSubmit)
 	router.ApplyRoute(r, routes.PostDemo)
 	router.ApplyRoute(r, routes.PostAuthGoogle)
+	router.ApplyRoute(r, routes.PostSubscribe)
+
 	router.ApplyRoute(r, routes.GetProject)
 	router.ApplyRoute(r, routes.GetProjectMetadata)
 	router.ApplyRoute(r, routes.GetDemoStatus)
